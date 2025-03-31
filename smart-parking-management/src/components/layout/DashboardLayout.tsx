@@ -7,7 +7,7 @@ import { ProtectedRoute } from "@/lib/auth/protected-route";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
-  requiredRoles?: string[];
+  requiredRoles?: string[]; 
 }
 
 export function DashboardLayout({

@@ -1,6 +1,10 @@
 {
   "/_not-found/page": "app/_not-found/page.js",
-  "/page": "app/page.js",
+  "/mobile/page": "app/mobile/page.js",
   "/dashboard/page": "app/dashboard/page.js",
-  "/settings/page": "app/settings/page.js"
+  "/settings/page": "app/settings/page.js",
+  "/vehicles/page": "app/vehicles/page.js",
+  "/page": "app/page.js",
+  "/registrations/page": "app/registrations/page.js",
+  "/reports/page": "app/reports/page.js"
 }
