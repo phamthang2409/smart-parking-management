@@ -1,0 +1,16 @@
+[images]
+  remote_images = ["https://.*\\.jpg", "https://.*\\.png", "https://.*\\.gif", "https://.*\\.webp", "https://.*\\.svg"]
+
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  NODE_ENV = "production"
+  NEXT_TELEMETRY_DISABLED = "1"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+[functions]
+  node_bundler = "esbuild"
