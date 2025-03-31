@@ -1,0 +1,9 @@
+# Bỏ node_modules để giảm kích thước repo
+node_modules/
+
+# Bỏ thư mục build của Next.js
+.next/
+
+# Bỏ file môi trường
+.env
+.env.local
