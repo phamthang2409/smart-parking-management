@@ -55,7 +55,7 @@ export default function DashboardPage() {
             value={dashboardStats.vehiclesIn}
             icon={Car}
             trend="up"
-            trendValue="+12 so với hôm qua"
+            trendValue="+10 so với hôm qua"
           />
           <StatCard
             title="Xe đã rời đi"

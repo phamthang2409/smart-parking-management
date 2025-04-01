@@ -17,6 +17,12 @@ export const navItems = [
     icon: "car",
   },
   {
+    title: "Công việc",
+    href: "/works",
+    icon: "briefcase",
+  },
+
+  {
     title: "Đăng ký xe tháng",
     href: "/registrations",
     icon: "calendar",
