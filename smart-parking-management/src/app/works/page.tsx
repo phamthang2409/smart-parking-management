@@ -98,6 +98,15 @@ export default function DashboardPage() {
                     <p><strong>Địa chỉ:</strong> {vehicleData.address}</p>
                   </CardContent>
                 </Card>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Thông tin vé xe</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                  <p><strong>Giờ vào:</strong> {vehicleData.time}</p>
+                  <p><strong>Vé:</strong> {vehicleData.ticketNumber}</p>
+                  </CardContent>
+                </Card>
               </div>
 
               {/* Camera chụp và nhận diện */}

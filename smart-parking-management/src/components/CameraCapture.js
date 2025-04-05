@@ -29,8 +29,10 @@ const CameraCapture = ({ onCapture }) => {
   return (
     <div>
       <video ref={videoRef} autoPlay width="100%" />
-      <button onClick={captureImage}>Chụp ảnh</button>
-    </div>
+      <button onClick={captureImage}
+              className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded mt-2">
+              Chụp ảnh</button>
+    </div>  
   );
 };
 

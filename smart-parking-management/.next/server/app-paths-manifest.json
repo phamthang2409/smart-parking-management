@@ -1,7 +1,5 @@
 {
-  "/works/page": "app/works/page.js",
-  "/registrations/page": "app/registrations/page.js",
   "/dashboard/page": "app/dashboard/page.js",
-  "/vehicles/page": "app/vehicles/page.js",
-  "/settings/page": "app/settings/page.js"
+  "/registrations/page": "app/registrations/page.js",
+  "/works/page": "app/works/page.js"
 }
