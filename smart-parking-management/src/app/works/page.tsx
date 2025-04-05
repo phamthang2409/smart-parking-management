@@ -72,7 +72,7 @@ export default function DashboardPage() {
           </TabsList>
 
           <TabsContent value="vehicle-info">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {/* Thông tin biển số và chi tiết */}
               <div className="space-y-4">
                 <Card>
