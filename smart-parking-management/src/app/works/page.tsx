@@ -18,33 +18,32 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
-// Component TaskCard để hiển thị công việc
-const TaskCard = ({
-  title,
-  description,
-  isCompleted,
-}: {
-  title: string;
-  description: string;
-  isCompleted: boolean;
-}) => (
-  <Card className={isCompleted ? "bg-green-50" : "bg-yellow-50"}>
-    <CardHeader>
-      <CardTitle>{title}</CardTitle>
-      <CardDescription>{description}</CardDescription>
-    </CardHeader>
-    <CardContent>
-      <p>{isCompleted ? "Công việc đã hoàn thành." : "Công việc đang thực hiện."}</p>
-    </CardContent>
-  </Card>
-);
+type SlotStatus = "booked" | "selected" | "regular" | "vip" | "sweetbox" | "center";
+
+const ParkingSlot = ({ label, status }: { label: string; status: SlotStatus }) => {
+  const isRed = ["booked", "selected", "vip", "sweetbox", "center"].includes(status);
+  return (
+    <div
+      className={`w-24 h-12 text-base rounded-md flex items-center justify-center text-white 
+      ${isRed ? "bg-red-500" : "bg-green-600"}`}
+    >
+      {label}
+    </div>
+  );
+};
+
+const getStatus = (label: string): SlotStatus => {
+  const booked = ["A3", "G1", "H1", "K4"];
+  const center = ["H2", "H3", "I2", "I3"];
+  const vip = ["E", "F", "G", "H", "I", "J", "K", "L"];
+  if (booked.includes(label)) return "booked";
+  if (center.includes(label)) return "center";
+  if (vip.some((row) => label.startsWith(row))) return "vip";
+  return "regular";
+};
+
 
 export default function DashboardPage() {
-  const [tasks] = useState([
-    { title: "Công việc 1", description: "Mô tả công việc 1", isCompleted: false },
-    { title: "Công việc 2", description: "Mô tả công việc 2", isCompleted: true },
-    { title: "Công việc 3", description: "Mô tả công việc 3", isCompleted: false },
-  ]);
 
   const [image, setImage] = useState<string | null>(null);
   const vehicleData = {
@@ -71,9 +70,9 @@ export default function DashboardPage() {
             <TabsTrigger value="tasks">Bãi giữ xe</TabsTrigger>
           </TabsList>
 
+          {/* THÔNG TIN XE */}
           <TabsContent value="vehicle-info">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {/* Thông tin biển số và chi tiết */}
               <div className="space-y-4">
                 <Card>
                   <CardHeader>
@@ -98,18 +97,18 @@ export default function DashboardPage() {
                     <p><strong>Địa chỉ:</strong> {vehicleData.address}</p>
                   </CardContent>
                 </Card>
+
                 <Card>
                   <CardHeader>
                     <CardTitle>Thông tin vé xe</CardTitle>
                   </CardHeader>
                   <CardContent>
-                  <p><strong>Giờ vào:</strong> {vehicleData.time}</p>
-                  <p><strong>Vé:</strong> {vehicleData.ticketNumber}</p>
+                    <p><strong>Giờ vào:</strong> {vehicleData.time}</p>
+                    <p><strong>Vé:</strong> {vehicleData.ticketNumber}</p>
                   </CardContent>
                 </Card>
               </div>
 
-              {/* Camera chụp và nhận diện */}
               <Card className="bg-blue-50 w-full md:w-[500px]">
                 <CardHeader>
                   <CardTitle>Quét biển số xe</CardTitle>
@@ -121,7 +120,7 @@ export default function DashboardPage() {
               </Card>
               <Card className="bg-blue-50 w-full md:w-[500px]">
                 <CardHeader>
-                  <CardTitle>Quét biển số xe</CardTitle>                  
+                  <CardTitle>Nhận diện biển số</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {image && <PlateRecognition image={image} />}
@@ -130,17 +129,59 @@ export default function DashboardPage() {
             </div>
           </TabsContent>
 
-         
+          {/* BÃI GIỮ XE */}
           <TabsContent value="tasks">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {tasks.map((task, index) => (
-                <TaskCard
-                  key={index}
-                  title={task.title}
-                  description={task.description}
-                  isCompleted={task.isCompleted}
-                />
-              ))}
+            <div className="w-full h-[85vh] flex flex-col items-center justify-start space-y-6 p-4 relative">
+              <div className="w-full flex justify-between text-lg font-semibold text-red-600 px-8">
+                <div className="border border-red-500 px-6 py-2 rounded">Lối ra</div>
+                <div className="border border-red-500 px-6 py-2 rounded">Lối Ra</div>
+              </div>
+
+              <div className="flex flex-row justify-center items-center gap-24 flex-1 w-full">
+                {/* Bên trái */}
+                <div className="flex flex-col space-y-4">
+                  {["A", "B", "C", "D", "E", "F"].map((row) => (
+                    <div key={row} className="flex space-x-4">
+                      {[1, 2, 3, 4].map((col) => {
+                        const label = `${row}${col}`;
+                        return (
+                          <ParkingSlot
+                            key={label}
+                            label={label}
+                            status={getStatus(label)}
+                          />
+                        );
+                      })}
+                    </div>
+                  ))}
+                </div>
+
+                {/* Lối vào */}
+                <div className="flex items-end justify-center h-full">
+                <div className="border border-red-500 px-4 py-20 rounded text-red-600 text-xl font-semibold rotate-360">
+                  Lối vào
+                </div>
+</div>
+
+
+                {/* Bên phải */}
+                <div className="flex flex-col space-y-4">
+                  {["G", "H", "I", "J", "K", "L"].map((row) => (
+                    <div key={row} className="flex space-x-4">
+                      {[1, 2, 3, 4].map((col) => {
+                        const label = `${row}${col}`;
+                        return (
+                          <ParkingSlot
+                            key={label}
+                            label={label}
+                            status={getStatus(label)}
+                          />
+                        );
+                      })}
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           </TabsContent>
         </Tabs>
