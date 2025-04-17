@@ -1,3 +1,4 @@
+// Trang login
 "use client";
 
 import { useState, useEffect } from "react";
@@ -91,9 +92,7 @@ export default function LoginPage() {
           <div className="flex justify-center">
             <CircleParking className="h-12 w-12 text-primary" />
           </div>
-          <CardTitle className="text-2xl font-bold">
-            Smart Parking
-          </CardTitle>
+          <CardTitle className="text-2xl font-bold">Smart Parking</CardTitle>
           <CardDescription>
             Đăng nhập vào hệ thống quản lý bãi xe thông minh
           </CardDescription>
@@ -148,9 +147,7 @@ export default function LoginPage() {
               admin@smartparking.com / admin123
             </code>
           </div>
-          <div className="text-xs">
-            © 2024 Smart Parking Management System
-          </div>
+          <div className="text-xs">© 2024 Smart Parking Management System</div>
         </CardFooter>
       </Card>
     </div>

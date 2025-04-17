@@ -16,15 +16,10 @@
       "static/chunks/main-app.js",
       "static/chunks/app/dashboard/page.js"
     ],
-    "/vehicles/page": [
+    "/registrations/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/vehicles/page.js"
-    ],
-    "/works/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/works/page.js"
+      "static/chunks/app/registrations/page.js"
     ]
   }
 }

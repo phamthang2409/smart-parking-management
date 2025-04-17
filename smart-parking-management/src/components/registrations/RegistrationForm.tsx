@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -24,9 +24,9 @@ import {
 import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
 import { CheckCircle } from "lucide-react";
-import { registrationPlans } from "@/lib/constants";
 import { formatCurrency } from "@/lib/utils";
 
+//Validation
 const formSchema = z.object({
   customerName: z.string().min(1, {
     message: "Vui lòng nhập tên khách hàng.",
@@ -48,9 +48,34 @@ const formSchema = z.object({
   }),
 });
 
+// Type cho package từ API
+type RegistrationPackage = {
+  id: number;
+  packageName: string;
+  description: string;
+  duration: number;
+  registratioSnFees: number;
+};
+
 export function RegistrationForm() {
-  const [selectedPlan, setSelectedPlan] = useState<typeof registrationPlans[0] | null>(null);
+  const [registrationPackages, setRegistrationPackages] = useState<
+    RegistrationPackage[]
+  >([]);
+  const [selectedPlan, setSelectedPlan] = useState<RegistrationPackage | null>(
+    null
+  );
   const [isSuccess, setIsSuccess] = useState(false);
+
+  //Lấy dữ liệu từ API
+  const fetchRegistrationPackages = async () => {
+    const res = await fetch("https://localhost:7107/api/RegistrationPackage");
+    const data = await res.json();
+    setRegistrationPackages(data);
+  };
+
+  useEffect(() => {
+    fetchRegistrationPackages();
+  }, []);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -65,10 +90,7 @@ export function RegistrationForm() {
   });
 
   function onSubmit(values: z.infer<typeof formSchema>) {
-    // Handle form submission (API call would go here in a real app)
     console.log(values);
-
-    // Show success state
     setIsSuccess(true);
     toast.success("Đăng ký xe tháng thành công");
   }
@@ -79,9 +101,13 @@ export function RegistrationForm() {
     setIsSuccess(false);
   }
 
-  function updateSelectedPlan(planId: string) {
-    const plan = registrationPlans.find((p) => p.id === planId);
-    setSelectedPlan(plan || null);
+  function updateSelectedPlan(planId: number) {
+    const plan = registrationPackages.find((p) => p.id === planId);
+    if (plan) {
+      setSelectedPlan(plan);
+    } else {
+      setSelectedPlan(null);
+    }
   }
 
   if (isSuccess) {
@@ -203,8 +229,9 @@ export function RegistrationForm() {
                   <FormItem>
                     <Select
                       onValueChange={(value) => {
+                        const numericValue = Number(value); //Ép string -> Number
                         field.onChange(value);
-                        updateSelectedPlan(value);
+                        updateSelectedPlan(numericValue);
                       }}
                       defaultValue={field.value}
                     >
@@ -214,9 +241,10 @@ export function RegistrationForm() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {registrationPlans.map((plan) => (
-                          <SelectItem key={plan.id} value={plan.id}>
-                            {plan.name} - {formatCurrency(plan.price)}
+                        {registrationPackages.map((p) => (
+                          <SelectItem key={p.id} value={p.id.toString()}>
+                            {p.packageName} -{" "}
+                            {formatCurrency(p.registratioSnFees)}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -238,21 +266,21 @@ export function RegistrationForm() {
         {selectedPlan ? (
           <Card>
             <CardContent className="pt-6">
-              <h3 className="text-lg font-medium">{selectedPlan.name}</h3>
+              <h3 className="text-lg font-medium">
+                {selectedPlan.packageName}
+              </h3>
               <p className="mt-1 text-sm text-muted-foreground">
                 {selectedPlan.description}
               </p>
               <div className="mt-4 space-y-2">
                 <div className="flex justify-between">
                   <span className="text-sm">Thời hạn:</span>
-                  <span className="font-medium">
-                    {selectedPlan.duration} ngày
-                  </span>
+                  <span className="font-medium">{selectedPlan.duration}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-sm">Phí đăng ký:</span>
                   <span className="font-medium">
-                    {formatCurrency(selectedPlan.price)}
+                    {formatCurrency(selectedPlan.registratioSnFees)}
                   </span>
                 </div>
               </div>

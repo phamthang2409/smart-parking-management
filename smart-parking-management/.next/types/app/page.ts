@@ -1,4 +1,4 @@
-// File: E:\reacjs\smart-parking-management-main\smart-parking-management\src\app\page.tsx
+// File: D:\smart-parking-management\smart-parking-management\src\app\page.tsx
 import * as entry from '../../../src/app/page.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 
