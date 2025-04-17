@@ -11,11 +11,16 @@ namespace smart_parking_system.Models
         [StringLength(50)]
         public string? PackageName { get; set; }
 
-        [DataType(DataType.Date)]
-        public DateTime Duration { get; set; }
+        [StringLength(20)]
+        [Required]
+        public string? Duration { get; set; }
 
         [Required]
         public double RegistratioSnFees { get; set; }
+
+        [Required]
+        [StringLength(100)]
+        public string? Description { get; set; }
 
         // Navigation property: 1 gói có nhiều đăng ký
         public ICollection<RegistrationCarMonthly>? RegistrationCarMonthlies { get; set; }
