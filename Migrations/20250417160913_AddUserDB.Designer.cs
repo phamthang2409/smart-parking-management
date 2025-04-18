@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using smart_parking_system.Models;
 
@@ -11,9 +12,11 @@ using smart_parking_system.Models;
 namespace smart_parking_system.Migrations
 {
     [DbContext(typeof(AppDBContext))]
-    partial class AppDBContextModelSnapshot : ModelSnapshot
+    [Migration("20250417160913_AddUserDB")]
+    partial class AddUserDB
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -77,8 +80,6 @@ namespace smart_parking_system.Migrations
 
                     b.HasKey("ID");
 
-                    b.HasIndex("RegistrationPackageId");
-
                     b.HasIndex("UserId");
 
                     b.ToTable("RegistrationCarMonthly");
@@ -97,15 +98,17 @@ namespace smart_parking_system.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
-                    b.Property<int>("Duration")
-                        .HasColumnType("int");
+                    b.Property<string>("Duration")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
 
                     b.Property<string>("PackageName")
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
-                    b.Property<double>("RegistrationsFees")
+                    b.Property<double>("RegistratioSnFees")
                         .HasColumnType("float");
 
                     b.HasKey("Id");
@@ -145,7 +148,7 @@ namespace smart_parking_system.Migrations
                 {
                     b.HasOne("smart_parking_system.Models.RegistrationPackage", "RegistrationPackage")
                         .WithMany("RegistrationCarMonthlies")
-                        .HasForeignKey("RegistrationPackageId")
+                        .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 

@@ -11,12 +11,11 @@ namespace smart_parking_system.Models
         [StringLength(50)]
         public string? PackageName { get; set; }
 
-        [StringLength(20)]
         [Required]
-        public string? Duration { get; set; }
+        public int Duration { get; set; }
 
         [Required]
-        public double RegistratioSnFees { get; set; }
+        public double RegistrationsFees { get; set; }
 
         [Required]
         [StringLength(100)]

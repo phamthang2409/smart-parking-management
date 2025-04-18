@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using smart_parking_system.Models;
 
@@ -11,9 +12,11 @@ using smart_parking_system.Models;
 namespace smart_parking_system.Migrations
 {
     [DbContext(typeof(AppDBContext))]
-    partial class AppDBContextModelSnapshot : ModelSnapshot
+    [Migration("20250417143515_AddCarDB")]
+    partial class AddCarDB
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -72,14 +75,9 @@ namespace smart_parking_system.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
                     b.HasKey("ID");
 
                     b.HasIndex("RegistrationPackageId");
-
-                    b.HasIndex("UserId");
 
                     b.ToTable("RegistrationCarMonthly");
                 });
@@ -97,48 +95,22 @@ namespace smart_parking_system.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
-                    b.Property<int>("Duration")
-                        .HasColumnType("int");
+                    b.Property<string>("Duration")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
 
                     b.Property<string>("PackageName")
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
-                    b.Property<double>("RegistrationsFees")
+                    b.Property<double>("RegistratioSnFees")
                         .HasColumnType("float");
 
                     b.HasKey("Id");
 
                     b.ToTable("RegistrationPackage");
-                });
-
-            modelBuilder.Entity("smart_parking_system.Models.UserModel", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<string>("FullName")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar");
-
-                    b.Property<string>("PhoneNumber")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("User");
                 });
 
             modelBuilder.Entity("smart_parking_system.Models.RegistrationCarMonthly", b =>
@@ -149,23 +121,10 @@ namespace smart_parking_system.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("smart_parking_system.Models.UserModel", "User")
-                        .WithMany("RegistrationCarMonthlies")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.Navigation("RegistrationPackage");
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("smart_parking_system.Models.RegistrationPackage", b =>
-                {
-                    b.Navigation("RegistrationCarMonthlies");
-                });
-
-            modelBuilder.Entity("smart_parking_system.Models.UserModel", b =>
                 {
                     b.Navigation("RegistrationCarMonthlies");
                 });

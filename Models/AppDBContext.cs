@@ -33,9 +33,14 @@ namespace smart_parking_system.Models
                 .WithMany(rp => rp.RegistrationCarMonthlies)
                 //Cột RegistrationPackageId trong bảng RegistrationCarMonthly là foreign key trỏ tới RegistrationPackage.Id.
                 .HasForeignKey(rcm => rcm.RegistrationPackageId);
+                
         }
 
         public DbSet<RegistrationCarMonthly> RegistrationCarMonthly { get; set; }
         public DbSet<RegistrationPackage> RegistrationPackage { get; set; }
+
+        public DbSet<CarModel> Car { get; set; }
+
+        public DbSet<UserModel> User { get; set; }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using smart_parking_system.DTO;
 using smart_parking_system.Models;
 
 namespace smart_parking_system.Areas.RegistrationPackageControllers.Controllers
@@ -10,7 +11,6 @@ namespace smart_parking_system.Areas.RegistrationPackageControllers.Controllers
         private readonly ILogger<RegistrationPackageController> _logger;
 
         private readonly AppDBContext _context;
-
         public RegistrationPackageController(ILogger<RegistrationPackageController> logger, AppDBContext context)
         {
             _logger = logger;

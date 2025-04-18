@@ -33,6 +33,11 @@ namespace smart_parking_system.Models
         [ForeignKey("RegistrationPackageId")]
         public RegistrationPackage? RegistrationPackage { get; set; }
 
+        [Required]
+        public int UserId { get; set; }
+        [ForeignKey("UserId")]
+        public UserModel? User { get; set; }
+
 
     }
 }

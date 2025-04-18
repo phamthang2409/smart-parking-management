@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using ASPMVC.Models;
 using smart_parking_system.Models;
 using smart_parking_system.Services;
+using smart_parking_system.DTO;
 
 namespace smart_parking_system.Areas.Controllers
 {
@@ -16,35 +17,82 @@ namespace smart_parking_system.Areas.Controllers
     public class RegistrationCarController : Controller
     {
         private readonly ILogger<RegistrationCarService> _logger;
-        private readonly RegistrationCarService _registrationCarService;
         private readonly AppDBContext _context;
         
 
-        public RegistrationCarController(ILogger<RegistrationCarService> logger, RegistrationCarService registrationCarService, AppDBContext context)
+        public RegistrationCarController(ILogger<RegistrationCarService> logger, AppDBContext context)
         {
             _logger = logger;
-            _registrationCarService = registrationCarService;
             _context = context;
         }
         //
-        List<RegistrationCarMonthly> registrationList;
-
         [HttpGet]
         public IActionResult Get()
         {
-            _logger.LogInformation("Bạn đã vào Get");
-            registrationList = _context.RegistrationCarMonthly.ToList();
-            return Ok(registrationList);
+            _logger.LogInformation("Bạn đã vào Get Registration list");
+            var data = from rcm in _context.RegistrationCarMonthly
+                       join rp in _context.RegistrationPackage on rcm.RegistrationPackageId equals rp.Id
+                       join u in _context.User on rcm.UserId equals u.Id
+                       select new RegistrationWithUserDto
+                       {
+                           Id = rcm.ID,
+                           LicensePlate = rcm.LicensedPlate,
+                           StartDate = rcm.StartDate,
+                           EndDate = rcm.EndDate,
+                           State = rcm.State,
+                           PackageName = rp.PackageName,
+                           CarName = rcm.CarName,
+                           CustomerName = u.FullName
+                       };
+            _logger.LogInformation("Lấy danh sách đăng ký thành công");
+            _logger.LogInformation("Có {count} bản ghi", data.Count());
+            return Ok(data.ToList());
         }
 
         [HttpPost]
-        public IActionResult Post([FromBody] RegistrationCarMonthly registrationCar)
+        public async Task<IActionResult> Post([FromBody] RegistrationDto dto)
         {
             _logger.LogInformation("Bạn đã vào Post");
-            //product.Id = products.Any() ? products.Max(p => p.Id) + 1 : 1;
-            _context.RegistrationCarMonthly.Add(registrationCar);
-            _context.SaveChanges();
-            return Ok(registrationCar);
+            _logger.LogInformation("Create a new registration package");
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                var car = _context.Car.FirstOrDefault(c => c.Id == dto.VehicleType);
+                var registrationPackage = _context.RegistrationPackage.FirstOrDefault(rp => rp.Id == dto.PlanId);
+                // Tạo một gói đăng ký mới
+
+                var newUser = new UserModel()
+                {
+                    FullName = dto.CustomerName,
+                    Email = dto.CustomerEmail,
+                    PhoneNumber = dto.CustomerPhone
+                };
+                // Lưu vào cơ sở dữ liệu
+                await _context.User.AddAsync(newUser);
+                await _context.SaveChangesAsync();
+
+                var newRegistration = new RegistrationCarMonthly()
+                {
+                    LicensedPlate = dto.LicensePlate,
+                    CarName = car.CarName,
+                    StartDate = DateTime.Now,
+                    EndDate = DateTime.Now.AddDays(registrationPackage.Duration),
+                    UserId = newUser.Id,
+                    RegistrationPackageId = registrationPackage.Id
+                };
+                newRegistration.State = DateTime.Now < newRegistration.EndDate ? "Hiệu lực" : "Hết hạn";
+
+                // Lưu vào cơ sở dữ liệu
+                await _context.RegistrationCarMonthly.AddAsync(newRegistration);
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+            }
+            catch (Exception e)
+            {
+                await transaction.RollbackAsync();
+                return BadRequest(e.Message);
+            }
+            return Ok();
         }
 
         //[HttpPut("{id}")]
