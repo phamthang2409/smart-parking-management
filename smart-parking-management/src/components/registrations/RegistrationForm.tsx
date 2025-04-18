@@ -25,7 +25,6 @@ import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
 import { CheckCircle } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
-
 //Validation
 const formSchema = z.object({
   customerName: z.string().min(1, {
@@ -54,16 +53,25 @@ type RegistrationPackage = {
   packageName: string;
   description: string;
   duration: number;
-  registratioSnFees: number;
+  registrationsFees: number;
+};
+
+type Cars = {
+  id: number;
+  carName: string;
 };
 
 export function RegistrationForm() {
+  //Setting for Registration Packages
   const [registrationPackages, setRegistrationPackages] = useState<
     RegistrationPackage[]
   >([]);
   const [selectedPlan, setSelectedPlan] = useState<RegistrationPackage | null>(
     null
   );
+  //Setting for Car list
+  const [cars, setCar] = useState<Cars[]>([]);
+  const [selectedCar, setSelectedCar] = useState<Cars | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
 
   //Lấy dữ liệu từ API
@@ -73,8 +81,15 @@ export function RegistrationForm() {
     setRegistrationPackages(data);
   };
 
+  const fetchCars = async () => {
+    const res = await fetch("https://localhost:7107/api/Car");
+    const data = await res.json();
+    setCar(data);
+  };
+
   useEffect(() => {
     fetchRegistrationPackages();
+    fetchCars();
   }, []);
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -89,16 +104,51 @@ export function RegistrationForm() {
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
-    setIsSuccess(true);
-    toast.success("Đăng ký xe tháng thành công");
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    try {
+      const response = await fetch(
+        "https://localhost:7107/api/RegistrationCar",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            customerName: values.customerName,
+            customerPhone: values.customerPhone,
+            customerEmail: values.customerEmail,
+            licensePlate: values.licensePlate,
+            vehicleType: Number(values.vehicleType), // ép về number nếu cần
+            planId: Number(values.planId), // ép về int để khớp DB
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Đăng ký thất bại!");
+      }
+
+      setIsSuccess(true);
+      toast.success("Đăng ký xe tháng thành công!");
+    } catch (error: any) {
+      console.error("Lỗi đăng ký:", error);
+      toast.error("Có lỗi xảy ra khi gửi đăng ký.");
+    }
   }
 
   function handleReset() {
     form.reset();
     setSelectedPlan(null);
     setIsSuccess(false);
+  }
+
+  function updateSelectedCar(planId: number) {
+    const plan = cars.find((p) => p.id === planId);
+    if (plan) {
+      setSelectedCar(plan);
+    } else {
+      setSelectedCar(null);
+    }
   }
 
   function updateSelectedPlan(planId: number) {
@@ -198,7 +248,11 @@ export function RegistrationForm() {
                     <FormItem>
                       <FormLabel>Loại xe *</FormLabel>
                       <Select
-                        onValueChange={field.onChange}
+                        onValueChange={(value) => {
+                          const numericValue = Number(value);
+                          field.onChange(value);
+                          updateSelectedCar(numericValue);
+                        }}
                         defaultValue={field.value}
                       >
                         <FormControl>
@@ -207,10 +261,11 @@ export function RegistrationForm() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="Xe máy">Xe máy</SelectItem>
-                          <SelectItem value="Ô tô">Ô tô</SelectItem>
-                          <SelectItem value="Xe tải">Xe tải</SelectItem>
-                          <SelectItem value="Khác">Khác</SelectItem>
+                          {cars.map((p) => (
+                            <SelectItem key={p.id} value={p.id.toString()}>
+                              {p.carName}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -244,7 +299,7 @@ export function RegistrationForm() {
                         {registrationPackages.map((p) => (
                           <SelectItem key={p.id} value={p.id.toString()}>
                             {p.packageName} -{" "}
-                            {formatCurrency(p.registratioSnFees)}
+                            {formatCurrency(p.registrationsFees)}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -280,7 +335,7 @@ export function RegistrationForm() {
                 <div className="flex justify-between">
                   <span className="text-sm">Phí đăng ký:</span>
                   <span className="font-medium">
-                    {formatCurrency(selectedPlan.registratioSnFees)}
+                    {formatCurrency(selectedPlan.registrationsFees)}
                   </span>
                 </div>
               </div>

@@ -1,7 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import { monthlyRegistrations } from "@/lib/data/mockData";
+import { useState, useEffect } from "react";
 import {
   Table,
   TableBody,
@@ -21,20 +20,42 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Search, MoreHorizontal, Calendar, CheckCircle, XCircle } from "lucide-react";
+import {
+  Search,
+  MoreHorizontal,
+  Calendar,
+  CheckCircle,
+  XCircle,
+} from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { toast } from "sonner";
+import { registrationCar } from "../../app/hooks/useRegistrationCar";
 
-export function RegistrationsList() {
+type Registration = {
+  Id: string;
+  CustomerName: string;
+  LicensedPlate: string;
+  CarName: string;
+  PackageName: string;
+  StartDate: string;
+  EndDate: string;
+  State: string;
+};
+
+export function RegistrationsList({ data }: { data: Registration[] }) {
   const [searchTerm, setSearchTerm] = useState("");
-
   // Filter registrations based on search term
-  const filteredRegistrations = monthlyRegistrations.filter(
-    (registration) =>
-      registration.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      registration.licensePlate.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      registration.vehicleType.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredRegistrations = Array.isArray(data)
+    ? data.filter(
+        (registration) =>
+          registration.CarName?.toLowerCase().includes(
+            searchTerm.toLowerCase()
+          ) ||
+          registration.LicensedPlate?.toLowerCase().includes(
+            searchTerm.toLowerCase()
+          )
+      )
+    : [];
 
   const handleExtend = (id: string) => {
     toast.success(`Gia hạn đăng ký ${id} thành công`);
@@ -76,34 +97,35 @@ export function RegistrationsList() {
           <TableBody>
             {filteredRegistrations.length > 0 ? (
               filteredRegistrations.map((registration) => (
-                <TableRow key={registration.id}>
+                <TableRow key={registration.Id}>
                   <TableCell className="font-medium">
-                    {registration.customerName}
+                    {registration.CustomerName}
                   </TableCell>
-                  <TableCell>{registration.licensePlate}</TableCell>
-                  <TableCell>{registration.vehicleType}</TableCell>
-                  <TableCell>{registration.plan}</TableCell>
-                  <TableCell>{registration.startDate}</TableCell>
-                  <TableCell>{registration.endDate}</TableCell>
+                  <TableCell>{registration.LicensedPlate}</TableCell>
+                  <TableCell>{registration.CarName}</TableCell>
+                  <TableCell>{registration.PackageName}</TableCell>
+                  <TableCell>{registration.StartDate}</TableCell>
+                  <TableCell>{registration.EndDate}</TableCell>
                   <TableCell>
                     <Badge
-                      variant={registration.status === "Hiệu lực" ? "outline" : "secondary"}
+                      variant={
+                        registration.State === "Hiệu lực"
+                          ? "outline"
+                          : "secondary"
+                      }
                       className={
-                        registration.status === "Hiệu lực"
+                        registration.State === "Hiệu lực"
                           ? "bg-green-50 text-green-600 hover:bg-green-50 hover:text-green-600"
                           : "bg-red-50 text-red-600 hover:bg-red-50 hover:text-red-600"
                       }
                     >
-                      {registration.status}
+                      {registration.State}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          className="h-8 w-8 p-0"
-                        >
+                        <Button variant="ghost" className="h-8 w-8 p-0">
                           <span className="sr-only">Mở menu</span>
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>
@@ -112,14 +134,14 @@ export function RegistrationsList() {
                         <DropdownMenuLabel>Thao tác</DropdownMenuLabel>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
-                          onClick={() => handleExtend(registration.id)}
+                          onClick={() => handleExtend(registration.Id)}
                           className="flex items-center"
                         >
                           <Calendar className="mr-2 h-4 w-4" />
                           <span>Gia hạn</span>
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                          onClick={() => handleCancel(registration.id)}
+                          onClick={() => handleCancel(registration.Id)}
                           className="flex items-center"
                         >
                           <XCircle className="mr-2 h-4 w-4" />
@@ -132,10 +154,7 @@ export function RegistrationsList() {
               ))
             ) : (
               <TableRow>
-                <TableCell
-                  colSpan={8}
-                  className="h-24 text-center"
-                >
+                <TableCell colSpan={8} className="h-24 text-center">
                   Không tìm thấy dữ liệu
                 </TableCell>
               </TableRow>

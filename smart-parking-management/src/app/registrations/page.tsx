@@ -2,11 +2,38 @@
 
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState, useEffect } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { RegistrationForm } from "@/components/registrations/RegistrationForm";
 import { RegistrationsList } from "@/components/registrations/RegistrationsList";
-
+import { registrationCar } from "../../app/hooks/useRegistrationCar";
 export default function RegistrationsPage() {
+  const [currentTab, setCurrentTab] = useState("new");
+  const [registeredCars, setRegisteredCars] = useState([]);
+  useEffect(() => {
+    async function fetchData() {
+      const data = await registrationCar();
+      const formattedData = data.map((item: any) => ({
+        Id: item.id,
+        CustomerName: item.customerName,
+        LicensedPlate: item.licensedPlate,
+        CarName: item.carName,
+        PackageName: item.packageName,
+        StartDate: item.startDate,
+        EndDate: item.endDate,
+        State: item.state,
+      }));
+      setRegisteredCars(formattedData);
+    }
+    if (currentTab == "list") fetchData(); // Gọi trong useEffect
+  }, [currentTab]);
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -17,7 +44,12 @@ export default function RegistrationsPage() {
           </p>
         </div>
 
-        <Tabs defaultValue="new" className="space-y-4">
+        <Tabs
+          defaultValue="new"
+          value={currentTab}
+          onValueChange={setCurrentTab}
+          className="space-y-4"
+        >
           <TabsList className="grid w-full grid-cols-2 lg:w-[400px]">
             <TabsTrigger value="new">Đăng ký mới</TabsTrigger>
             <TabsTrigger value="list">Danh sách đã đăng ký</TabsTrigger>
@@ -46,7 +78,7 @@ export default function RegistrationsPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <RegistrationsList />
+                <RegistrationsList data={registeredCars} />
               </CardContent>
             </Card>
           </TabsContent>

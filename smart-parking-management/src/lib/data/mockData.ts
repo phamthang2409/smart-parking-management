@@ -1,6 +1,8 @@
 // Mock data for demo purposes
 import { format, subDays, subHours, addDays } from "date-fns";
 
+import { useState, useEffect } from "react";
+
 // Dashboard stats
 export const dashboardStats = {
   totalVehicles: 158,
@@ -27,9 +29,8 @@ export const vehicleActivityData = Array.from({ length: 7 }, (_, i) => {
 export const hourlyData = Array.from({ length: 24 }, (_, i) => {
   return {
     hour: `${i}:00`,
-    vehicles: i < new Date().getHours()
-      ? Math.floor(Math.random() * 30) + 5
-      : null,
+    vehicles:
+      i < new Date().getHours() ? Math.floor(Math.random() * 30) + 5 : null,
   };
 });
 
@@ -46,10 +47,15 @@ export const revenueData = Array.from({ length: 7 }, (_, i) => {
 export const currentVehicles = Array.from({ length: 20 }, (_, i) => {
   return {
     id: `VEH-${1000 + i}`,
-    licensePlate: `${Math.floor(Math.random() * 90) + 10}A-${Math.floor(Math.random() * 900) + 100}.${Math.floor(Math.random() * 90) + 10}`,
-    entryTime: format(subHours(new Date(), Math.floor(Math.random() * 10)), "HH:mm:ss dd/MM/yyyy"),
+    licensePlate: `${Math.floor(Math.random() * 90) + 10}A-${
+      Math.floor(Math.random() * 900) + 100
+    }.${Math.floor(Math.random() * 90) + 10}`,
+    entryTime: format(
+      subHours(new Date(), Math.floor(Math.random() * 10)),
+      "HH:mm:ss dd/MM/yyyy"
+    ),
     parkingSpot: `A-${Math.floor(Math.random() * 100) + 1}`,
-    type: i % 3 === 0 ? "Xe máy" : (i % 3 === 1 ? "Ô tô" : "Xe tải"),
+    type: i % 3 === 0 ? "Xe máy" : i % 3 === 1 ? "Ô tô" : "Xe tải",
     status: "Đang đỗ",
     isMonthly: i % 4 === 0,
   };
@@ -58,37 +64,25 @@ export const currentVehicles = Array.from({ length: 20 }, (_, i) => {
 // Vehicle history
 export const vehicleHistory = Array.from({ length: 50 }, (_, i) => {
   const entryDate = subDays(new Date(), Math.floor(Math.random() * 30));
-  const exitDate = addDays(entryDate, Math.random() < 0.8 ? Math.random() * 1 : 0);
-  const duration = Math.round((exitDate.getTime() - entryDate.getTime()) / (1000 * 60 * 60));
+  const exitDate = addDays(
+    entryDate,
+    Math.random() < 0.8 ? Math.random() * 1 : 0
+  );
+  const duration = Math.round(
+    (exitDate.getTime() - entryDate.getTime()) / (1000 * 60 * 60)
+  );
 
   return {
     id: `VEH-${2000 + i}`,
-    licensePlate: `${Math.floor(Math.random() * 90) + 10}A-${Math.floor(Math.random() * 900) + 100}.${Math.floor(Math.random() * 90) + 10}`,
+    licensePlate: `${Math.floor(Math.random() * 90) + 10}A-${
+      Math.floor(Math.random() * 900) + 100
+    }.${Math.floor(Math.random() * 90) + 10}`,
     entryTime: format(entryDate, "HH:mm:ss dd/MM/yyyy"),
     exitTime: format(exitDate, "HH:mm:ss dd/MM/yyyy"),
     duration: `${duration} giờ`,
     fee: duration * 20000,
     status: "Đã rời đi",
-    type: i % 3 === 0 ? "Xe máy" : (i % 3 === 1 ? "Ô tô" : "Xe tải"),
-  };
-});
-
-// Monthly registrations
-export const monthlyRegistrations = Array.from({ length: 15 }, (_, i) => {
-  const startDate = subDays(new Date(), Math.floor(Math.random() * 60));
-  const endDate = addDays(startDate, 30);
-
-  return {
-    id: `REG-${3000 + i}`,
-    customerName: `Khách hàng ${i + 1}`,
-    customerPhone: `09${Math.floor(Math.random() * 90000000) + 10000000}`,
-    licensePlate: `${Math.floor(Math.random() * 90) + 10}A-${Math.floor(Math.random() * 900) + 100}.${Math.floor(Math.random() * 90) + 10}`,
-    vehicleType: i % 3 === 0 ? "Xe máy" : (i % 3 === 1 ? "Ô tô" : "Xe tải"),
-    startDate: format(startDate, "dd/MM/yyyy"),
-    endDate: format(endDate, "dd/MM/yyyy"),
-    plan: i % 3 === 0 ? "Gói tháng" : (i % 3 === 1 ? "Gói quý" : "Gói năm"),
-    fee: i % 3 === 0 ? 500000 : (i % 3 === 1 ? 1350000 : 4800000),
-    status: new Date() < endDate ? "Hiệu lực" : "Hết hạn",
+    type: i % 3 === 0 ? "Xe máy" : i % 3 === 1 ? "Ô tô" : "Xe tải",
   };
 });
 
