@@ -16,21 +16,21 @@ import { registrationCar } from "../../app/hooks/useRegistrationCar";
 export default function RegistrationsPage() {
   const [currentTab, setCurrentTab] = useState("new");
   const [registeredCars, setRegisteredCars] = useState([]);
+  const fetchData = async () => {
+    const data = await registrationCar();
+    const formattedData = data.map((item: any) => ({
+      Id: item.id,
+      CustomerName: item.customerName,
+      LicensedPlate: item.licensedPlate,
+      CarName: item.carName,
+      PackageName: item.packageName,
+      StartDate: item.startDate,
+      EndDate: item.endDate,
+      State: item.state,
+    }));
+    setRegisteredCars(formattedData);
+  };
   useEffect(() => {
-    async function fetchData() {
-      const data = await registrationCar();
-      const formattedData = data.map((item: any) => ({
-        Id: item.id,
-        CustomerName: item.customerName,
-        LicensedPlate: item.licensedPlate,
-        CarName: item.carName,
-        PackageName: item.packageName,
-        StartDate: item.startDate,
-        EndDate: item.endDate,
-        State: item.state,
-      }));
-      setRegisteredCars(formattedData);
-    }
     if (currentTab == "list") fetchData(); // Gọi trong useEffect
   }, [currentTab]);
 
@@ -78,7 +78,10 @@ export default function RegistrationsPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <RegistrationsList data={registeredCars} />
+                <RegistrationsList
+                  data={registeredCars}
+                  fetchData={fetchData}
+                />
               </CardContent>
             </Card>
           </TabsContent>

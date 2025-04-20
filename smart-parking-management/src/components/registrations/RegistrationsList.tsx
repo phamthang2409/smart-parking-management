@@ -42,7 +42,12 @@ type Registration = {
   State: string;
 };
 
-export function RegistrationsList({ data }: { data: Registration[] }) {
+type Props = {
+  data: Registration[];
+  fetchData: () => void;
+};
+
+export function RegistrationsList({ data, fetchData }: Props) {
   const [searchTerm, setSearchTerm] = useState("");
   // Filter registrations based on search term
   const filteredRegistrations = Array.isArray(data)
@@ -58,11 +63,22 @@ export function RegistrationsList({ data }: { data: Registration[] }) {
     : [];
 
   const handleExtend = (id: string) => {
-    toast.success(`Gia hạn đăng ký ${id} thành công`);
+    fetch(`https://localhost:7107/api/RegistrationCar/${id}`, {
+      method: "EDIT",
+    })
+      .then(() => toast.success(`Gia hạn đăng ký ${id} thành công`))
+      .catch(() => toast.error("Xảy ra lỗi khi gia hạn"));
   };
 
   const handleCancel = (id: string) => {
-    toast.success(`Đã hủy đăng ký ${id}`);
+    fetch(`https://localhost:7107/api/RegistrationCar/${id}`, {
+      method: "DELETE",
+    })
+      .then(() => {
+        fetchData();
+        toast.success(`Hủy đăng ký ${id} thành công`);
+      })
+      .catch(() => toast.error("Xảy ra lỗi khi gia hạn"));
   };
 
   return (
