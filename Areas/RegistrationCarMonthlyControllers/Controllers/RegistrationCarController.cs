@@ -95,31 +95,31 @@ namespace smart_parking_system.Areas.Controllers
             return Ok();
         }
 
-        //[HttpPut("{id}")]
-        //public IActionResult Put(int id, [FromBody] ProductModel product)
-        //{
-        //    _logger.LogInformation("Bạn đã vào Put");
-        //    var p = Products.FirstOrDefault(p => p.Id == id);
-        //    if (p == null) return NotFound();
-        //    p.Name = product.Name;
-        //    return Ok(p);
-        //}
-
         [HttpDelete("{id}")]
-        public IActionResult Delete(int id)
+        public async Task<IActionResult> Delete(int id)
         {
             _logger.LogInformation("Bạn đã vào Delete");
-            var registrationList = _context.RegistrationCarMonthly.ToList();
-            var registrationCar = registrationList.FirstOrDefault(p => p.ID == id);
-            if (registrationCar == null)
+            using var transaction = _context.Database.BeginTransaction();
+            try
             {
-                _logger.LogError("Không tìm thấy product");
-                return NotFound();
+                
+                var registrationList = _context.RegistrationCarMonthly.ToList();
+                _logger.LogInformation("Excute delete a user");
+                var registrationCar = registrationList.FirstOrDefault(p => p.ID == id);
+                var user = _context.User.FirstOrDefault(u => u.Id == registrationCar.UserId);
+                _context.User.Remove(user);
+                await _context.SaveChangesAsync();
+
+                _context.RegistrationCarMonthly.Remove(registrationCar);
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+                _logger.LogInformation("Delete thành công");
             }
-            ;
-            _context.RegistrationCarMonthly.Remove(registrationCar);
-            _context.SaveChanges();
-            _logger.LogInformation("Delete thành công");
+            catch (Exception e)
+            {
+                transaction.Rollback();
+                return BadRequest(e.Message);
+            }     
             return Ok();
         }
     }
