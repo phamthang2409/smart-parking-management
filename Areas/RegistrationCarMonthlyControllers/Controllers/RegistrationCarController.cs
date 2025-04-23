@@ -98,28 +98,55 @@ namespace smart_parking_system.Areas.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
+            _logger.LogWarning($"ID: {id}");
             _logger.LogInformation("Bạn đã vào Delete");
             using var transaction = _context.Database.BeginTransaction();
             try
             {
-                
-                var registrationList = _context.RegistrationCarMonthly.ToList();
                 _logger.LogInformation("Excute delete a user");
-                var registrationCar = registrationList.FirstOrDefault(p => p.ID == id);
+                var registrationCar = _context.RegistrationCarMonthly.FirstOrDefault(p => p.ID == id);
                 var user = _context.User.FirstOrDefault(u => u.Id == registrationCar.UserId);
+                _context.RegistrationCarMonthly.Remove(registrationCar);
                 _context.User.Remove(user);
                 await _context.SaveChangesAsync();
-
-                _context.RegistrationCarMonthly.Remove(registrationCar);
-                await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
-                _logger.LogInformation("Delete thành công");
+                _logger.LogInformation("Delete REGISTRATION CAR THANH CONG");
             }
             catch (Exception e)
             {
                 transaction.Rollback();
                 return BadRequest(e.Message);
             }     
+            return Ok();
+        }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult>PUT(int id, [FromBody] RegistrationDto dto)
+        {
+            _logger.LogInformation("Bạn đã vào Put");
+            using var transaction = _context.Database.BeginTransaction();
+            try
+            {
+                var registrationCar = _context.RegistrationCarMonthly.FirstOrDefault(p => p.ID == id);
+                var user = _context.User.FirstOrDefault(u => u.Id == registrationCar.UserId);
+                var car = _context.Car.FirstOrDefault(c => c.Id == dto.VehicleType);
+                var registrationPackage = _context.RegistrationPackage.FirstOrDefault(rp => rp.Id == dto.PlanId);
+                registrationCar.LicensedPlate = dto.LicensePlate;
+                registrationCar.CarName = car.CarName;
+                registrationCar.StartDate = DateTime.Now;
+                registrationCar.EndDate = DateTime.Now.AddDays(registrationPackage.Duration);
+                registrationCar.State = DateTime.Now < registrationCar.EndDate ? "Hiệu lực" : "Hết hạn";
+                user.FullName = dto.CustomerName;
+                user.Email = dto.CustomerEmail;
+                user.PhoneNumber = dto.CustomerPhone;
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+            }
+            catch (Exception e)
+            {
+                await transaction.RollbackAsync();
+                return BadRequest(e.Message);
+            }
             return Ok();
         }
     }
