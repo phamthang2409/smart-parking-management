@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   Table,
   TableBody,
@@ -21,15 +21,23 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  Search,
-  MoreHorizontal,
-  Calendar,
-  CheckCircle,
-  XCircle,
-} from "lucide-react";
-import { formatCurrency } from "@/lib/utils";
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectTrigger,
+  SelectItem,
+  SelectContent,
+  SelectValue,
+} from "@/components/ui/select";
+import { Search, MoreHorizontal, Calendar, XCircle } from "lucide-react";
 import { toast } from "sonner";
-import { registrationCar } from "../../app/hooks/useRegistrationCar";
 
 type Registration = {
   Id: string;
@@ -49,7 +57,11 @@ type Props = {
 
 export function RegistrationsList({ data, fetchData }: Props) {
   const [searchTerm, setSearchTerm] = useState("");
-  // Filter registrations based on search term
+  const [openDialog, setOpenDialog] = useState(false);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedPackage, setSelectedPackage] = useState<string>("");
+  const [startDate, setStartDate] = useState<string>("");
+
   const filteredRegistrations = Array.isArray(data)
     ? data.filter(
         (registration) =>
@@ -62,11 +74,30 @@ export function RegistrationsList({ data, fetchData }: Props) {
       )
     : [];
 
-  const handleExtend = (id: string) => {
-    fetch(`https://localhost:7107/api/RegistrationCar/${id}`, {
-      method: "EDIT",
+  const handleOpenDialog = (id: string) => {
+    setSelectedId(id);
+    setOpenDialog(true);
+  };
+
+  const handleExtendSubmit = () => {
+    if (!selectedId || !selectedPackage || !startDate) {
+      toast.error("Vui lòng nhập đầy đủ thông tin gia hạn.");
+      return;
+    }
+
+    fetch(`https://localhost:7107/api/RegistrationCar/extend/${selectedId}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        packageName: selectedPackage,
+        startDate: startDate,
+      }),
     })
-      .then(() => toast.success(`Gia hạn đăng ký ${id} thành công`))
+      .then(() => {
+        toast.success(`Gia hạn thành công cho đăng ký ${selectedId}`);
+        fetchData();
+        setOpenDialog(false);
+      })
       .catch(() => toast.error("Xảy ra lỗi khi gia hạn"));
   };
 
@@ -78,7 +109,7 @@ export function RegistrationsList({ data, fetchData }: Props) {
         fetchData();
         toast.success(`Hủy đăng ký ${id} thành công`);
       })
-      .catch(() => toast.error("Xảy ra lỗi khi gia hạn"));
+      .catch(() => toast.error("Xảy ra lỗi khi hủy"));
   };
 
   return (
@@ -150,7 +181,7 @@ export function RegistrationsList({ data, fetchData }: Props) {
                         <DropdownMenuLabel>Thao tác</DropdownMenuLabel>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
-                          onClick={() => handleExtend(registration.Id)}
+                          onClick={() => handleOpenDialog(registration.Id)}
                           className="flex items-center"
                         >
                           <Calendar className="mr-2 h-4 w-4" />
@@ -178,6 +209,43 @@ export function RegistrationsList({ data, fetchData }: Props) {
           </TableBody>
         </Table>
       </div>
+
+      {/* Modal Gia hạn */}
+      <Dialog open={openDialog} onOpenChange={setOpenDialog}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Gia hạn đăng ký</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Gói đăng ký mới</Label>
+              <Select onValueChange={setSelectedPackage}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Chọn gói đăng ký" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Gói tháng">Gói 1 tháng</SelectItem>
+                  <SelectItem value="Gói quý">Gói quý (3 tháng)</SelectItem>
+                  <SelectItem value="Gói năm">Gói 1 năm</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Ngày bắt đầu</Label>
+              <Input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={handleExtendSubmit}>Xác nhận</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
+
+

@@ -1,4 +1,4 @@
-// File: D:\smart-parking-management\smart-parking-management\src\app\page.tsx
+// File: C:\Users\laptop\Documents\GitHub\smart-parking-management\smart-parking-management\src\app\page.tsx
 import * as entry from '../../../src/app/page.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 
