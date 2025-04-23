@@ -86,7 +86,7 @@ export function RegistrationsList({ data, fetchData }: Props) {
     }
 
     fetch(`https://localhost:7107/api/RegistrationCar/extend/${selectedId}`, {
-      method: "POST",
+      method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         packageName: selectedPackage,
@@ -247,5 +247,3 @@ export function RegistrationsList({ data, fetchData }: Props) {
     </div>
   );
 }
-
-
