@@ -1,8 +1,8 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -13,15 +13,18 @@ import {
 import { RegistrationForm } from "@/components/registrations/RegistrationForm";
 import { RegistrationsList } from "@/components/registrations/RegistrationsList";
 import { registrationCar } from "../../app/hooks/useRegistrationCar";
+
 export default function RegistrationsPage() {
   const [currentTab, setCurrentTab] = useState("new");
   const [registeredCars, setRegisteredCars] = useState([]);
+
+  // ✅ Tách fetchData ra ngoài để có thể truyền props
   const fetchData = async () => {
     const data = await registrationCar();
     const formattedData = data.map((item: any) => ({
       Id: item.id,
       CustomerName: item.customerName,
-      LicensedPlate: item.licensedPlate,
+      LicensedPlate: item.licensePlate,
       CarName: item.carName,
       PackageName: item.packageName,
       StartDate: item.startDate,
@@ -30,8 +33,12 @@ export default function RegistrationsPage() {
     }));
     setRegisteredCars(formattedData);
   };
+
+  // ✅ Tự động gọi lại khi chuyển tab sang "list"
   useEffect(() => {
-    if (currentTab == "list") fetchData(); // Gọi trong useEffect
+    if (currentTab === "list") {
+      fetchData();
+    }
   }, [currentTab]);
 
   return (
@@ -64,7 +71,8 @@ export default function RegistrationsPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <RegistrationForm />
+                {/* ✅ Truyền fetchData để gọi lại sau khi POST */}
+                <RegistrationForm />/
               </CardContent>
             </Card>
           </TabsContent>
@@ -78,6 +86,7 @@ export default function RegistrationsPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
+                {/* ✅ Truyền data + fetchData để xoá hoặc cập nhật */}
                 <RegistrationsList
                   data={registeredCars}
                   fetchData={fetchData}
