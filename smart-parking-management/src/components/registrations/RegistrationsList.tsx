@@ -85,7 +85,7 @@ export function RegistrationsList({ data, fetchData }: Props) {
       return;
     }
 
-    fetch(`https://localhost:7107/api/RegistrationCar/extend/${selectedId}`, {
+    fetch(`https://localhost:7107/api/RegistrationCar/${selectedId}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
