@@ -44,6 +44,18 @@ namespace smart_parking_system.Areas.Controllers
                            CarName = rcm.CarName,
                            CustomerName = u.FullName
                        };
+            //Check date expire
+            foreach (var registrationCar in data)
+            {
+                if (DateTime.Now < registrationCar.EndDate)
+                {
+                    registrationCar.State = "Hiệu lực";
+                }
+                else
+                {
+                    registrationCar.State = "Hết hạn";
+                }
+            }
             _logger.LogInformation("Lấy danh sách đăng ký thành công");
             _logger.LogInformation("Có {count} bản ghi", data.Count());
             return Ok(data.ToList());
@@ -121,26 +133,20 @@ namespace smart_parking_system.Areas.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult>PUT(int id, [FromBody] RegistrationDto dto)
+        public async Task<IActionResult>PUT(int id, [FromBody] UpdateRegistrationDto dto)
         {
             _logger.LogInformation("Bạn đã vào Put");
             using var transaction = _context.Database.BeginTransaction();
             try
             {
                 var registrationCar = _context.RegistrationCarMonthly.FirstOrDefault(p => p.ID == id);
-                var user = _context.User.FirstOrDefault(u => u.Id == registrationCar.UserId);
-                var car = _context.Car.FirstOrDefault(c => c.Id == dto.VehicleType);
-                var registrationPackage = _context.RegistrationPackage.FirstOrDefault(rp => rp.Id == dto.PlanId);
-                registrationCar.LicensedPlate = dto.LicensePlate;
-                registrationCar.CarName = car.CarName;
-                registrationCar.StartDate = DateTime.Now;
-                registrationCar.EndDate = DateTime.Now.AddDays(registrationPackage.Duration);
-                registrationCar.State = DateTime.Now < registrationCar.EndDate ? "Hiệu lực" : "Hết hạn";
-                user.FullName = dto.CustomerName;
-                user.Email = dto.CustomerEmail;
-                user.PhoneNumber = dto.CustomerPhone;
+                var registrationPackage = _context.RegistrationPackage.FirstOrDefault(rp => rp.PackageName == dto.PackageName);
+                registrationCar.RegistrationPackageId = registrationPackage.Id;
+                registrationCar.StartDate = dto.StartDate;
+                registrationCar.EndDate = registrationCar.StartDate.AddDays(registrationPackage.Duration);
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
+                _logger.LogInformation("Update REGISTRATION CAR THANH CONG");
             }
             catch (Exception e)
             {
