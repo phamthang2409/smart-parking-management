@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "@radix-ui/react-use-effect-event": "^0.0.2",
     "next": "^15.2.4",
     "opencv.js": "^1.2.1",
     "tesseract.js": "^6.0.0"
