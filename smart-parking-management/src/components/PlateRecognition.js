@@ -1,28 +1,48 @@
 import { useEffect, useRef, useState } from "react";
-import Tesseract from "tesseract.js";
 
 const PlateRecognition = ({ image }) => {
   const [text, setText] = useState("");
-  const [rawText, setRawText] = useState(""); // Kết quả OCR thô
+  const [rawText, setRawText] = useState("");
   const [loading, setLoading] = useState(false);
   const canvasRef = useRef();
 
   useEffect(() => {
-    if (image) recognizePlate();
+    if (image) {
+      recognizePlate();
+    }
   }, [image]);
 
-  const cleanPlateText = (rawText) => {
-    let cleaned = rawText
-      .toUpperCase()
-      .replace(/[^A-Z0-9]/g, "") // Loại bỏ ký tự không cần thiết
-      .replace(/O/g, "0")
-      .replace(/I/g, "1")
-      .replace(/Z/g, "2")
-      .replace(/S/g, "5");
+  const recognizePlate = async () => {
+    setLoading(true);
+    setText("");
+    setRawText("");
 
-    const regex = /\d{2}[A-Z]{1,2}\d{4,5}/;
-    const match = cleaned.match(regex);
-    return match ? match[0] : "";
+    try {
+      const processedImage = await preprocessImage();
+      if (!processedImage) {
+        setText("Lỗi xử lý ảnh");
+        setLoading(false);
+        return;
+      }
+
+      const blob = await (await fetch(processedImage)).blob();
+      const formData = new FormData();
+      formData.append("file", blob, "plate.jpg");
+
+      const response = await fetch("http://localhost:8000/recognize-plate/", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await response.json();
+      setText(data.plate || "Không nhận diện được");
+      setRawText(data.all?.join(", ") || "");
+    } catch (error) {
+      console.error("Lỗi gửi tới server:", error);
+      setText("Lỗi nhận diện");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const preprocessImage = async () => {
@@ -36,116 +56,93 @@ const PlateRecognition = ({ image }) => {
         const videoW = img.width;
         const videoH = img.height;
 
-        // Cắt vùng giữa ảnh
         const cropW = videoW * 0.9;
         const cropH = videoH * 0.4;
         const cropX = (videoW - cropW) / 2;
         const cropY = videoH * 0.55 - cropH / 2;
 
-        // Vẽ ảnh gốc lên canvas (giữ nguyên độ phân giải)
-        ctx.drawImage(img, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
+        const tempCanvas = document.createElement("canvas");
+        const tempCtx = tempCanvas.getContext("2d");
+        tempCanvas.width = cropW;
+        tempCanvas.height = cropH;
+        tempCtx.drawImage(img, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
 
-        // Bước 1: Phát hiện góc nghiêng và xoay ảnh
-        const rotatedCanvas = document.createElement("canvas");
-        const rotatedCtx = rotatedCanvas.getContext("2d");
+        const aspectRatio = cropW / cropH;
+        let processedCanvas = tempCanvas;
+        let currentW = cropW;
+        let currentH = cropH;
 
-        // Kiểm tra góc của biển số và xoay ảnh
-        rotatedCanvas.width = cropW;
-        rotatedCanvas.height = cropH;
+        if (aspectRatio < 0.7) {
+          const rotatedCanvas = document.createElement("canvas");
+          const rotatedCtx = rotatedCanvas.getContext("2d");
+          rotatedCanvas.width = currentH;
+          rotatedCanvas.height = currentW;
 
-        // Giả sử ảnh là vuông và chúng ta cần xoay lại
-        const angle = 0; // Nếu có góc nghiêng, tính toán góc này
-        rotatedCtx.translate(cropW / 2, cropH / 2);
-        rotatedCtx.rotate((angle * Math.PI) / 180);
-        rotatedCtx.translate(-cropW / 2, -cropH / 2);
+          rotatedCtx.translate(currentH / 2, currentW / 2);
+          rotatedCtx.rotate(90 * Math.PI / 180);
+          rotatedCtx.drawImage(tempCanvas, -currentW / 2, -currentH / 2);
 
-        rotatedCtx.drawImage(canvas, 0, 0);
-
-        // Bước 2: Tăng độ phân giải của ảnh
-        const scale = 2; // Phóng đại ảnh crop
-        const scaledCanvas = document.createElement("canvas");
-        const scaledCtx = scaledCanvas.getContext("2d");
-        scaledCanvas.width = cropW * scale;
-        scaledCanvas.height = cropH * scale;
-
-        scaledCtx.scale(scale, scale); // Áp dụng phóng đại
-        scaledCtx.drawImage(rotatedCanvas, 0, 0);
-
-        const imageData = scaledCtx.getImageData(
-          0,
-          0,
-          scaledCanvas.width,
-          scaledCanvas.height
-        );
-
-        // Bước 3: Chuyển sang grayscale (đen trắng)
-        for (let i = 0; i < imageData.data.length; i += 4) {
-          const r = imageData.data[i];
-          const g = imageData.data[i + 1];
-          const b = imageData.data[i + 2];
-          const avg = (r + g + b) / 3;
-          const threshold = avg > 120 ? 255 : 0;
-
-          imageData.data[i] =
-            imageData.data[i + 1] =
-            imageData.data[i + 2] =
-              threshold;
+          processedCanvas = rotatedCanvas;
+          currentW = processedCanvas.width;
+          currentH = processedCanvas.height;
         }
 
-        scaledCtx.putImageData(imageData, 0, 0);
+        const scale = 2;
+        canvas.width = currentW * scale;
+        canvas.height = currentH * scale;
+        const ctxMain = canvas.getContext("2d");
+        ctxMain.scale(scale, scale);
+        ctxMain.drawImage(processedCanvas, 0, 0);
 
-        // Trả lại ảnh đã xử lý
-        resolve(scaledCanvas.toDataURL());
+        const imageData = ctxMain.getImageData(0, 0, canvas.width, canvas.height);
+        const data = imageData.data;
+        const threshold = 150;
+
+        for (let i = 0; i < data.length; i += 4) {
+          const luminance = 0.2126 * data[i] + 0.7152 * data[i + 1] + 0.0722 * data[i + 2];
+          const color = luminance > threshold ? 255 : 0;
+          data[i] = data[i + 1] = data[i + 2] = color;
+        }
+
+        ctxMain.putImageData(imageData, 0, 0);
+        resolve(canvas.toDataURL());
+      };
+      img.onerror = (error) => {
+        console.error("Lỗi khi tải ảnh:", error);
+        resolve(null);
       };
     });
   };
 
-  const recognizePlate = async () => {
-    setLoading(true);
-    try {
-      const processedImage = await preprocessImage();
-
-      const { data } = await Tesseract.recognize(processedImage, "eng", {
-        logger: (m) => console.log(m),
-      });
-
-      console.log("OCR thô:", data.text); // Debug log
-      setRawText(data.text);
-
-      const plate = cleanPlateText(data.text);
-      setText(plate || "Không tìm thấy biển số phù hợp");
-    } catch (err) {
-      console.error("Lỗi nhận diện:", err);
-      setText("Không thể nhận diện");
-    }
-    setLoading(false);
-  };
-
   return (
-    <div>
-      <h3 className="text-lg font-semibold mb-2">📸 Quét biển số xe</h3>
+    <div className="p-4 bg-white rounded-lg shadow-md">
+      <h3 className="text-xl font-bold text-gray-800 mb-4">📸 Quét biển số xe</h3>
+
       {image && (
-        <>
-          <img
-            src={image}
-            alt="Ảnh đã chụp"
-            className="w-full mb-2 rounded shadow"
-          />
-          <p className="text-sm text-gray-600">🎯 Vùng crop đang được quét:</p>
-          <canvas ref={canvasRef} className="border mt-1 rounded shadow" />
-        </>
+        <div className="mb-4">
+          <p className="text-sm text-gray-600 mb-1">Ảnh gốc:</p>
+          <img src={image} alt="Ảnh đã chụp" className="w-full max-w-sm mx-auto rounded shadow-sm border border-gray-200" />
+        </div>
       )}
+
+      <div className="mb-4">
+        <p className="text-sm text-gray-600 mb-1">🎯 Vùng ảnh đã xử lý (cắt, xoay, phóng to, ảnh xám):</p>
+        <canvas ref={canvasRef} className="w-full max-w-sm mx-auto border border-gray-300 rounded shadow-sm bg-gray-100" style={{ maxWidth: '100%', height: 'auto' }} />
+      </div>
+
       {loading ? (
-        <p className="text-blue-500 mt-2">🔄 Đang nhận diện...</p>
+        <p className="text-blue-600 mt-2 text-center">
+          <span className="animate-spin inline-block mr-2">🔄</span> Đang nhận diện...
+        </p>
       ) : (
-        <>
-          <p className="mt-2">
-            📌 <strong>Biển số:</strong> {text}
+        <div className="mt-4">
+          <p className="text-lg font-semibold text-gray-800">
+            📌 <strong>Biển số:</strong> <span className="text-green-700">{text}</span>
           </p>
-          <p className="text-sm text-gray-500">
-            🧪 <strong>Kết quả OCR thô:</strong> {rawText}
+          <p className="text-sm text-gray-500 mt-1">
+            🧪 <strong>Kết quả OCR thô:</strong> <span className="font-mono break-all">{rawText || "N/A"}</span>
           </p>
-        </>
+        </div>
       )}
     </div>
   );
