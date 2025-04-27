@@ -1,15 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import CameraCapture from "@/components/CameraCapture";
 import PlateRecognition from "@/components/PlateRecognition";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { registrationCar } from "../../app/hooks/useRegistrationCar";
 import {
   Card,
   CardContent,
@@ -56,6 +52,24 @@ export default function DashboardPage() {
   const [image, setImage] = useState<string | null>(null);
   const [slotStatuses, setSlotStatuses] = useState(getInitialStatus());
   const [vehicleType, setVehicleType] = useState("Xe máy");
+  const [plateText, setPlateText] = useState("");
+  const [rawPlateText, setRawPlateText] = useState("");
+  const [hasPlateData, setHasPlateData] = useState(false);
+  const [registeredCars, setRegisteredCars] = useState<any[]>([]);
+  const [vehicleInfo, setVehicleInfo] = useState<any>(null);
+  const [isCheckedIn, setIsCheckedIn] = useState(false);
+
+  // Check In
+  const handleCheckIn = () => {
+    console.log("Check In:", formatPlate(plateText));
+    setIsCheckedIn(true);
+  };
+
+  // Check Out
+  const handleCheckOut = () => {
+    console.log("Check Out:", formatPlate(plateText));
+    setIsCheckedIn(false);
+  };
 
   const getPrice = (type: string) => (type === "Xe máy" ? "5,000₫" : "20,000₫");
 
@@ -66,15 +80,103 @@ export default function DashboardPage() {
     }));
   };
 
-  const vehicleData = {
-    plateNumber: "76A-123.45",
-    time: "07:30",
-    type: "Tháng",
-    ticketNumber: "T123456",
-    ownerName: "Nguyễn Văn A",
-    dateOfBirth: "01/01/1990",
-    expiryDate: "01/01/2026",
-    address: "Quảng Ngãi",
+  const fetchData = async () => {
+    const data = await registrationCar();
+    const formattedData = data.map((item: any) => ({
+      id: item.id,
+      customerName: item.customerName,
+      licensePlate: item.licensePlate,
+      carName: item.carName,
+      packageName: item.packageName,
+      startDate: item.startDate,
+      endDate: item.endDate,
+      state: item.state,
+    }));
+    setRegisteredCars(formattedData);
+  };
+
+  const handlePlateData = async (text: string, raw: string) => {
+    setPlateText(text);
+    setRawPlateText(raw);
+    setHasPlateData(true);
+    await fetchData();
+  };
+
+  useEffect(() => {
+    if (hasPlateData && registeredCars.length > 0) {
+      const found = registeredCars.find(
+        (car) =>
+          car.licensePlate.replace(/\s/g, "") ===
+          formatPlate(plateText).replace(/\s/g, "")
+      );
+      if (found) {
+        setVehicleInfo({
+          plateNumber: found.licensePlate,
+          ownerName: found.customerName,
+          carName: found.carName,
+          packageName: found.packageName,
+          startDate: found.startDate,
+          endDate: found.endDate,
+        });
+      } else {
+        setVehicleInfo(null); // Không tìm thấy biển số phù hợp
+      }
+    }
+  }, [hasPlateData, registeredCars, plateText]);
+
+  //Format Plate Number
+  const formatPlate = (raw?: string) => {
+    if (raw == null) return "";
+
+    const replaceFirstNumberWithChar: { [key: string]: string } = {
+      "0": "O",
+      "1": "I",
+      "2": "Z",
+      "3": "B",
+      "5": "S",
+      "6": "G",
+      "8": "B",
+    };
+
+    // Loại bỏ khoảng trắng và ký tự đặc biệt, chuyển về in hoa
+    let cleanedRaw = raw
+      .trim()
+      .toUpperCase()
+      .replace(/[^A-Z0-9]/g, "");
+
+    if (cleanedRaw.length <= 6) return "";
+    // Chỉ thay thế ký tự thứ 3 nếu nó là số
+    if (cleanedRaw.length >= 3 && /\d/.test(cleanedRaw[2])) {
+      const charToReplace = cleanedRaw[2];
+      const replacedChar =
+        replaceFirstNumberWithChar[charToReplace] || charToReplace;
+      cleanedRaw = cleanedRaw.slice(0, 2) + replacedChar + cleanedRaw.slice(3);
+    }
+
+    // Format biển số theo chuẩn Việt Nam: XXY-NNN.NN hoặc XXY-NNNN
+    if (cleanedRaw.length >= 7) {
+      const provinceCode = cleanedRaw.slice(0, 2);
+      const typeChar = cleanedRaw.slice(2, 4);
+      const numberPart = cleanedRaw.slice(4);
+
+      if (numberPart.length >= 5) {
+        const firstThree = numberPart.slice(0, 3);
+        const lastTwo = numberPart.slice(3);
+        return `${provinceCode} ${typeChar} ${firstThree}.${lastTwo}`;
+      } else {
+        return `${provinceCode}-${typeChar} ${numberPart}`;
+      }
+    }
+
+    return cleanedRaw;
+  };
+
+  const formatData = (dateString: string) => {
+    const date = new Date(dateString);
+    const day = date.getDate().toString().padStart(2, "0");
+    const month = (date.getMonth() + 1).toString().padStart(2, "0");
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
   };
 
   return (
@@ -90,71 +192,98 @@ export default function DashboardPage() {
             <TabsTrigger value="tasks">Bãi giữ xe</TabsTrigger>
           </TabsList>
 
-          {/* THÔNG TIN XE */}
+          {/* --- Thông tin xe --- */}
           <TabsContent value="vehicle-info">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="space-y-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Biển số xe</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-2xl font-bold">{vehicleData.plateNumber}</p>
-                  </CardContent>
-                </Card>
+                {!hasPlateData ? (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Biển số xe</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-gray-500">Chưa có biển số xe</p>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <>
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Biển số xe</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-2xl font-bold">
+                          {formatPlate(plateText)}
+                        </p>
 
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Thông tin chi tiết</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p><strong>Giờ vào:</strong> {vehicleData.time}</p>
-                    <p><strong>Loại vé:</strong> {vehicleData.type}</p>
-                    <p><strong>Vé:</strong> {vehicleData.ticketNumber}</p>
-                    <p><strong>Tên chủ xe:</strong> {vehicleData.ownerName}</p>
-                    <p><strong>Ngày sinh:</strong> {vehicleData.dateOfBirth}</p>
-                    <p><strong>Ngày hết hạn:</strong> {vehicleData.expiryDate}</p>
-                    <p><strong>Địa chỉ:</strong> {vehicleData.address}</p>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Thông tin vé xe</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-2">
-                    <p><strong>Giờ vào:</strong> {vehicleData.time}</p>
-                    <p><strong>Vé:</strong> {vehicleData.ticketNumber}</p>
-                    <div>
-                      <strong>Loại xe:</strong>
-                      <div className="flex gap-4 mt-1">
-                        <button
-                          className={`px-3 py-1 rounded border ${
-                            vehicleType === "Xe máy" ? "bg-blue-500 text-white" : "bg-white"
-                          }`}
-                          onClick={() => setVehicleType("Xe máy")}
-                        >
-                          Xe máy
-                        </button>
-                        <button
-                          className={`px-3 py-1 rounded border ${
-                            vehicleType === "Ô tô" ? "bg-blue-500 text-white" : "bg-white"
-                          }`}
-                          onClick={() => setVehicleType("Ô tô")}
-                        >
-                          Ô tô
-                        </button>
-                      </div>
-                    </div>
-                    <p><strong>Giá:</strong> {getPrice(vehicleType)}</p>
-                  </CardContent>
-                </Card>
+                        {/* Hiện nút Check In/Out */}
+                        <div className="mt-4 space-x-4">
+                          {!isCheckedIn ? (
+                            <button
+                              onClick={handleCheckIn}
+                              className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                            >
+                              Check In
+                            </button>
+                          ) : (
+                            <button
+                              onClick={handleCheckOut}
+                              className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+                            >
+                              Check Out
+                            </button>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Thông tin chi tiết</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        {vehicleInfo ? (
+                          <>
+                            <p>
+                              <strong>Chủ xe:</strong> {vehicleInfo.ownerName}
+                            </p>
+                            <p>
+                              <strong>Xe:</strong> {vehicleInfo.carName}
+                            </p>
+                            <p>
+                              <strong>Gói:</strong> {vehicleInfo.packageName}
+                            </p>
+                            <p>
+                              <strong>Ngày bắt đầu:</strong>{" "}
+                              {formatData(vehicleInfo.startDate)}
+                            </p>
+                            <p>
+                              <strong>Ngày kết thúc:</strong>{" "}
+                              {formatData(vehicleInfo.endDate)}
+                            </p>
+                          </>
+                        ) : (
+                          <>
+                            <p>
+                              <strong>Loại xe:</strong> Xe khách / Vãng lai
+                            </p>
+                            <p>
+                              <strong>Phí gửi:</strong> {getPrice(vehicleType)}
+                            </p>
+                          </>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </>
+                )}
               </div>
 
+              {/* Camera + Nhận diện luôn hiện */}
               <Card className="bg-blue-50 w-full md:w-[500px]">
                 <CardHeader>
                   <CardTitle>Quét biển số xe</CardTitle>
-                  <CardDescription>Chụp và nhận diện biển số bằng camera máy tính</CardDescription>
+                  <CardDescription>
+                    Chụp và nhận diện biển số bằng camera máy tính
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <CameraCapture onCapture={setImage} />
@@ -165,22 +294,30 @@ export default function DashboardPage() {
                   <CardTitle>Nhận diện biển số</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {image && <PlateRecognition image={image} />}
+                  {image && (
+                    <PlateRecognition
+                      image={image}
+                      onResult={handlePlateData}
+                    />
+                  )}
                 </CardContent>
               </Card>
             </div>
           </TabsContent>
 
-          {/* BÃI GIỮ XE */}
+          {/* --- Bãi giữ xe --- */}
           <TabsContent value="tasks">
             <div className="w-full h-[85vh] flex flex-col items-center justify-start space-y-6 p-4 relative">
               <div className="w-full flex justify-between text-lg font-semibold text-red-600 px-8">
-                <div className="border border-red-500 px-6 py-2 rounded">Lối ra</div>
-                <div className="border border-red-500 px-6 py-2 rounded">Lối Ra</div>
+                <div className="border border-red-500 px-6 py-2 rounded">
+                  Lối ra
+                </div>
+                <div className="border border-red-500 px-6 py-2 rounded">
+                  Lối ra
+                </div>
               </div>
 
               <div className="flex flex-row justify-center items-center gap-24 flex-1 w-full">
-                {/* Bên trái */}
                 <div className="flex flex-col space-y-4">
                   {["A", "B", "C", "D", "E", "F"].map((row) => (
                     <div key={row} className="flex space-x-4">
@@ -199,14 +336,12 @@ export default function DashboardPage() {
                   ))}
                 </div>
 
-                {/* Lối vào */}
                 <div className="flex items-end justify-center h-full">
-                  <div className="border border-red-500 px-4 py-20 rounded text-red-600 text-xl font-semibold rotate-360">
+                  <div className="border border-red-500 px-4 py-20 rounded text-red-600 text-xl font-semibold">
                     Lối vào
                   </div>
                 </div>
 
-                {/* Bên phải */}
                 <div className="flex flex-col space-y-4">
                   {["G", "H", "I", "J", "K", "L"].map((row) => (
                     <div key={row} className="flex space-x-4">

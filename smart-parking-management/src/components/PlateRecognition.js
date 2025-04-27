@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 
-const PlateRecognition = ({ image }) => {
+const PlateRecognition = ({ image, onResult }) => {
   const [text, setText] = useState("");
   const [rawText, setRawText] = useState("");
   const [loading, setLoading] = useState(false);
@@ -37,6 +37,10 @@ const PlateRecognition = ({ image }) => {
       const data = await response.json();
       setText(data.plate || "Không nhận diện được");
       setRawText(data.all?.join(", ") || "");
+
+      if (onResult) {
+        onResult(data.plate, data.rawText); //Truyền dữ liệu sang page.jsx
+      }
     } catch (error) {
       console.error("Lỗi gửi tới server:", error);
       setText("Lỗi nhận diện");
@@ -79,7 +83,7 @@ const PlateRecognition = ({ image }) => {
           rotatedCanvas.height = currentW;
 
           rotatedCtx.translate(currentH / 2, currentW / 2);
-          rotatedCtx.rotate(90 * Math.PI / 180);
+          rotatedCtx.rotate((90 * Math.PI) / 180);
           rotatedCtx.drawImage(tempCanvas, -currentW / 2, -currentH / 2);
 
           processedCanvas = rotatedCanvas;
@@ -94,12 +98,18 @@ const PlateRecognition = ({ image }) => {
         ctxMain.scale(scale, scale);
         ctxMain.drawImage(processedCanvas, 0, 0);
 
-        const imageData = ctxMain.getImageData(0, 0, canvas.width, canvas.height);
+        const imageData = ctxMain.getImageData(
+          0,
+          0,
+          canvas.width,
+          canvas.height
+        );
         const data = imageData.data;
         const threshold = 150;
 
         for (let i = 0; i < data.length; i += 4) {
-          const luminance = 0.2126 * data[i] + 0.7152 * data[i + 1] + 0.0722 * data[i + 2];
+          const luminance =
+            0.2126 * data[i] + 0.7152 * data[i + 1] + 0.0722 * data[i + 2];
           const color = luminance > threshold ? 255 : 0;
           data[i] = data[i + 1] = data[i + 2] = color;
         }
@@ -116,31 +126,46 @@ const PlateRecognition = ({ image }) => {
 
   return (
     <div className="p-4 bg-white rounded-lg shadow-md">
-      <h3 className="text-xl font-bold text-gray-800 mb-4">📸 Quét biển số xe</h3>
+      <h3 className="text-xl font-bold text-gray-800 mb-4">
+        📸 Quét biển số xe
+      </h3>
 
       {image && (
         <div className="mb-4">
           <p className="text-sm text-gray-600 mb-1">Ảnh gốc:</p>
-          <img src={image} alt="Ảnh đã chụp" className="w-full max-w-sm mx-auto rounded shadow-sm border border-gray-200" />
+          <img
+            src={image}
+            alt="Ảnh đã chụp"
+            className="w-full max-w-sm mx-auto rounded shadow-sm border border-gray-200"
+          />
         </div>
       )}
 
       <div className="mb-4">
-        <p className="text-sm text-gray-600 mb-1">🎯 Vùng ảnh đã xử lý (cắt, xoay, phóng to, ảnh xám):</p>
-        <canvas ref={canvasRef} className="w-full max-w-sm mx-auto border border-gray-300 rounded shadow-sm bg-gray-100" style={{ maxWidth: '100%', height: 'auto' }} />
+        <p className="text-sm text-gray-600 mb-1">
+          🎯 Vùng ảnh đã xử lý (cắt, xoay, phóng to, ảnh xám):
+        </p>
+        <canvas
+          ref={canvasRef}
+          className="w-full max-w-sm mx-auto border border-gray-300 rounded shadow-sm bg-gray-100"
+          style={{ maxWidth: "100%", height: "auto" }}
+        />
       </div>
 
       {loading ? (
         <p className="text-blue-600 mt-2 text-center">
-          <span className="animate-spin inline-block mr-2">🔄</span> Đang nhận diện...
+          <span className="animate-spin inline-block mr-2">🔄</span> Đang nhận
+          diện...
         </p>
       ) : (
         <div className="mt-4">
           <p className="text-lg font-semibold text-gray-800">
-            📌 <strong>Biển số:</strong> <span className="text-green-700">{text}</span>
+            📌 <strong>Biển số:</strong>{" "}
+            <span className="text-green-700">{text}</span>
           </p>
           <p className="text-sm text-gray-500 mt-1">
-            🧪 <strong>Kết quả OCR thô:</strong> <span className="font-mono break-all">{rawText || "N/A"}</span>
+            🧪 <strong>Kết quả OCR thô:</strong>{" "}
+            <span className="font-mono break-all">{rawText || "N/A"}</span>
           </p>
         </div>
       )}
