@@ -6,6 +6,8 @@ const PlateRecognition = ({ image, onResult }) => {
   const [loading, setLoading] = useState(false);
   const [confidence, setConfidence] = useState(null); // Thêm state để lưu độ tin cậy
   const [isRecognized, setIsRecognized] = useState(false); // Thêm state để kiểm tra nếu đã nhận diện xong
+  const [retryCount, setRetryCount] = useState(0); // đếm số lần thử
+  const maxRetries = 5; // số lần tối đa cho phép thử lại
   const canvasRef = useRef();
 
   useEffect(() => {
@@ -18,7 +20,7 @@ const PlateRecognition = ({ image, onResult }) => {
     setLoading(true);
     setText("");
     setRawText("");
-    setConfidence(null); // Đặt lại độ tin cậy khi bắt đầu nhận diện
+    setConfidence(null);
 
     try {
       const processedImage = await preprocessImage();
@@ -40,22 +42,44 @@ const PlateRecognition = ({ image, onResult }) => {
       const data = await response.json();
       setText(data.plate || "Không nhận diện được");
       setRawText(data.all?.map((line) => line.text).join(", ") || "");
-      setConfidence(data.confidence); // Lưu độ tin cậy vào state
+      setConfidence(data.confidence);
 
-      // Kiểm tra nếu biển số có đủ số ký tự
-      const minPlateLength = 6; // Ví dụ, số ký tự tối thiểu cho biển số là 6
-      if (text.length >= minPlateLength && data.confidence > 85) {
-        setIsRecognized(true); // Nếu đủ ký tự và độ tin cậy > 85%
-      }
+      const minPlateLength = 6;
 
-      if (onResult) {
-        onResult(data.plate, data.rawText);
+      if (
+        data.plate &&
+        data.plate.length >= minPlateLength &&
+        data.confidence >= 85
+      ) {
+        setIsRecognized(true);
+        setLoading(false);
+        if (onResult) {
+          onResult(data.plate, data.rawText);
+        }
+        setRetryCount(0); // Reset lại số lần thử nếu thành công
+      } else if (retryCount < maxRetries) {
+        console.warn(
+          `Độ tin cậy thấp (${data.confidence}%), thử lại lần ${
+            retryCount + 1
+          }...`
+        );
+        setRetryCount((prev) => prev + 1);
+        setTimeout(() => {
+          recognizePlate(); // Thử lại
+        }, 500);
+      } else {
+        console.error("Đã vượt quá số lần thử tối đa.");
+        setLoading(false);
+        setIsRecognized(false); // Đánh dấu là nhận diện thất bại
       }
     } catch (error) {
       console.error("Lỗi gửi tới server:", error);
       setText("Lỗi nhận diện");
     } finally {
-      setLoading(false);
+      // Chỉ tắt loading khi thành công hoặc hết lần retry
+      if (retryCount >= maxRetries) {
+        setLoading(false);
+      }
     }
   };
 

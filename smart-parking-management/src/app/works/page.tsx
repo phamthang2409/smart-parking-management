@@ -13,6 +13,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { url } from "inspector";
 
 type SlotStatus = "available" | "occupied";
 
@@ -62,6 +63,18 @@ export default function DashboardPage() {
   // Check In
   const handleCheckIn = () => {
     console.log("Check In:", formatPlate(plateText));
+    const fullNameToSave = vehicleInfo?.ownerName || "Khách / Vãng lai";
+    fetch(`https://localhost:7107/api/CheckInCar/`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        FullName: fullNameToSave,
+        LicensePlate: vehicleInfo?.plateNumber || formatPlate(plateText),
+        Price: null,
+        CarType: vehicleInfo?.plateNumber || formatPlate(plateText),
+      }),
+    });
+
     setIsCheckedIn(true);
   };
 
