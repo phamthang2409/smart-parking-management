@@ -4,18 +4,21 @@ const PlateRecognition = ({ image, onResult }) => {
   const [text, setText] = useState("");
   const [rawText, setRawText] = useState("");
   const [loading, setLoading] = useState(false);
+  const [confidence, setConfidence] = useState(null); // Thêm state để lưu độ tin cậy
+  const [isRecognized, setIsRecognized] = useState(false); // Thêm state để kiểm tra nếu đã nhận diện xong
   const canvasRef = useRef();
 
   useEffect(() => {
-    if (image) {
+    if (image && !isRecognized) {
       recognizePlate();
     }
-  }, [image]);
+  }, [image, isRecognized]);
 
   const recognizePlate = async () => {
     setLoading(true);
     setText("");
     setRawText("");
+    setConfidence(null); // Đặt lại độ tin cậy khi bắt đầu nhận diện
 
     try {
       const processedImage = await preprocessImage();
@@ -36,10 +39,17 @@ const PlateRecognition = ({ image, onResult }) => {
 
       const data = await response.json();
       setText(data.plate || "Không nhận diện được");
-      setRawText(data.all?.join(", ") || "");
+      setRawText(data.all?.map((line) => line.text).join(", ") || "");
+      setConfidence(data.confidence); // Lưu độ tin cậy vào state
+
+      // Kiểm tra nếu biển số có đủ số ký tự
+      const minPlateLength = 6; // Ví dụ, số ký tự tối thiểu cho biển số là 6
+      if (text.length >= minPlateLength && data.confidence > 85) {
+        setIsRecognized(true); // Nếu đủ ký tự và độ tin cậy > 85%
+      }
 
       if (onResult) {
-        onResult(data.plate, data.rawText); //Truyền dữ liệu sang page.jsx
+        onResult(data.plate, data.rawText);
       }
     } catch (error) {
       console.error("Lỗi gửi tới server:", error);
@@ -166,6 +176,10 @@ const PlateRecognition = ({ image, onResult }) => {
           <p className="text-sm text-gray-500 mt-1">
             🧪 <strong>Kết quả OCR thô:</strong>{" "}
             <span className="font-mono break-all">{rawText || "N/A"}</span>
+          </p>
+          <p className="text-sm text-gray-600 mt-2">
+            🏅 <strong>Độ tin cậy:</strong>{" "}
+            <span className="text-blue-600">{confidence}%</span>
           </p>
         </div>
       )}
