@@ -14,6 +14,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { url } from "inspector";
+import { toast } from "sonner";
 
 type SlotStatus = "available" | "occupied";
 
@@ -61,22 +62,32 @@ export default function DashboardPage() {
   const [isCheckedIn, setIsCheckedIn] = useState(false);
 
   // Check In
-  const handleCheckIn = () => {
+  async function handleCheckIn() {
     console.log("Check In:", formatPlate(plateText));
     const fullNameToSave = vehicleInfo?.ownerName || "Khách / Vãng lai";
-    fetch(`https://localhost:7107/api/CheckInCar/`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        FullName: fullNameToSave,
-        LicensePlate: vehicleInfo?.plateNumber || formatPlate(plateText),
-        Price: null,
-        CarType: vehicleInfo?.plateNumber || formatPlate(plateText),
-      }),
-    });
+    try {
+      const response = await fetch(`https://localhost:7107/api/CheckInCar/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          FullName: fullNameToSave,
+          LicensePlate:
+            formatPlate(vehicleInfo?.plateNumber) || formatPlate(plateText),
+          Price: 0,
+          CarType: vehicleInfo?.plateNumber || formatPlate(plateText),
+        }),
+      });
+      if (!response.ok) {
+        toast.error("Check in thất bại");
+      }
 
-    setIsCheckedIn(true);
-  };
+      toast.success("Check in thành công");
+
+      setIsCheckedIn(true);
+    } catch (error: any) {
+      toast.error("Có lỗi xảy ra khi check in");
+    }
+  }
 
   // Check Out
   const handleCheckOut = () => {
