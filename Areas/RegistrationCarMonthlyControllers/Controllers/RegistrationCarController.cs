@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using ASPMVC.Models;
 using smart_parking_system.Models;
 using smart_parking_system.Services;
 using smart_parking_system.DTO;

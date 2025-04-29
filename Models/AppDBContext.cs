@@ -42,5 +42,7 @@ namespace smart_parking_system.Models
         public DbSet<CarModel> Car { get; set; }
 
         public DbSet<UserModel> User { get; set; }
+
+        public DbSet<CheckInModel> CheckInCar { get; set; }
     }
 }

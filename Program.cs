@@ -1,7 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 using smart_parking_system.Models;
-using Microsoft.Extensions.DependencyInjection;
-using ASPMVC.Models;
 using smart_parking_system.Services;
 
 namespace smart_parking_system
@@ -11,7 +9,7 @@ namespace smart_parking_system
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
-            builder.Services.AddDbContext<AppDbContext>(options =>
+            builder.Services.AddDbContext<AppDBContext>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("AppDbContext") ?? throw new InvalidOperationException("Connection string 'AppDbContext' not found.")));
 
             // Add services to the container.
