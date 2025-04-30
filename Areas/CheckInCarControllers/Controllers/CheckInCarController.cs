@@ -22,8 +22,8 @@ namespace smart_parking_system.Areas.CheckInCarControllers.Controllers
         public IActionResult Get()
         {
             _logger.LogInformation("Bạn đã vào Get CheckinCar");
-            var registrationPackages = _context.CheckInCar.ToList();
-            return Ok(registrationPackages);
+            var checkInCarList = _context.CheckInCar.ToList();
+            return Ok(checkInCarList);
         }
 
         [HttpPost]
@@ -44,7 +44,8 @@ namespace smart_parking_system.Areas.CheckInCarControllers.Controllers
                     LicensePlate = dto.LicensePlate,
                     Price = dto.Price,
                     CarType = dto.CarType,
-                    CheckInTime = DateTime.Now
+                    CheckInTime = DateTime.Now,
+                    Checkin_images = dto.Checkin_images,
                 };
 
                 // Thêm mới đối tượng vào cơ sở dữ liệu
@@ -60,6 +61,37 @@ namespace smart_parking_system.Areas.CheckInCarControllers.Controllers
                 _logger.LogError($"Lỗi khi thực hiện check-in: {e.Message}");
                 return BadRequest(new { message = "Lỗi khi thực hiện check-in", error = e.Message });
             }
+        }
+
+            [HttpPost("upload")]
+            public async Task<IActionResult> UploadImage(IFormFile imageFile)
+            {
+                if (imageFile == null || imageFile.Length == 0)
+                {
+                    return BadRequest("Không có file ảnh nào được gửi.");
+                }
+
+                // Đặt đường dẫn để lưu ảnh
+                var uploadPath = Path.Combine(Directory.GetCurrentDirectory(), "UploadedFiles");
+
+                // Tạo thư mục nếu chưa tồn tại
+                if (!Directory.Exists(uploadPath))
+                {
+                    Directory.CreateDirectory(uploadPath);
+                }
+
+                // Tạo tên tệp tin duy nhất
+                var fileName = Path.GetFileName(imageFile.FileName);
+                var filePath = Path.Combine(uploadPath, fileName);
+
+                // Lưu ảnh vào server
+                using (var stream = new FileStream(filePath, FileMode.Create))
+            {
+                    await imageFile.CopyToAsync(stream);
+            }
+
+             // Trả về thông báo thành công với tên file đã lưu
+            return Ok(new { message = "Ảnh đã được tải lên thành công.", filePath });
         }
     }
 }
