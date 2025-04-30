@@ -6,6 +6,9 @@ import CameraCapture from "@/components/CameraCapture";
 import PlateRecognition from "@/components/PlateRecognition";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { registrationCar } from "../../app/hooks/useRegistrationCar";
+import { sendToBackend } from "@/app/api/uploadPlate";
+import { checkInCar } from "../../app/hooks/useCheckInCar";
+
 import {
   Card,
   CardContent,
@@ -58,14 +61,20 @@ export default function DashboardPage() {
   const [rawPlateText, setRawPlateText] = useState("");
   const [hasPlateData, setHasPlateData] = useState(false);
   const [registeredCars, setRegisteredCars] = useState<any[]>([]);
+  const [checkInCars, setCheckInCars] = useState<any[]>([]);
   const [vehicleInfo, setVehicleInfo] = useState<any>(null);
   const [isCheckedIn, setIsCheckedIn] = useState(false);
 
   // Check In
   async function handleCheckIn() {
-    console.log("Check In:", formatPlate(plateText));
     const fullNameToSave = vehicleInfo?.ownerName || "Khách / Vãng lai";
+    let urlImage: string | null = null; //
     try {
+      // Gửi ảnh về backend nếu có ảnh
+      if (image) {
+        urlImage = await sendToBackend(image);
+      }
+
       const response = await fetch(`https://localhost:7107/api/CheckInCar/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -74,7 +83,8 @@ export default function DashboardPage() {
           LicensePlate:
             formatPlate(vehicleInfo?.plateNumber) || formatPlate(plateText),
           Price: 0,
-          CarType: vehicleInfo?.plateNumber || formatPlate(plateText),
+          CarType: vehicleInfo?.carName || formatPlate(plateText),
+          Checkin_images: urlImage,
         }),
       });
       if (!response.ok) {
@@ -90,10 +100,10 @@ export default function DashboardPage() {
   }
 
   // Check Out
-  const handleCheckOut = () => {
+  async function handleCheckOut() {
     console.log("Check Out:", formatPlate(plateText));
     setIsCheckedIn(false);
-  };
+  }
 
   const getPrice = (type: string) => (type === "Xe máy" ? "5,000₫" : "20,000₫");
 
@@ -119,11 +129,27 @@ export default function DashboardPage() {
     setRegisteredCars(formattedData);
   };
 
+  const fetchDataCheckInCar = async () => {
+    const data = await checkInCar();
+    const formattedData = data.map((item: any) => ({
+      id: item.id,
+      fullName: item.fullName,
+      licensePlate: item.licensePlate,
+      price: item.price,
+      carType: item.carType,
+      checkin_images: item.checkin_images,
+      checkInTime: item.checkInTime,
+      checkOutTime: item.checkOutTime,
+    }));
+    setCheckInCars(formattedData);
+  };
+
   const handlePlateData = async (text: string, raw: string) => {
     setPlateText(text);
     setRawPlateText(raw);
     setHasPlateData(true);
     await fetchData();
+    await fetchDataCheckInCar();
   };
 
   useEffect(() => {
@@ -135,6 +161,7 @@ export default function DashboardPage() {
       );
       if (found) {
         setVehicleInfo({
+          id: found.id,
           plateNumber: found.licensePlate,
           ownerName: found.customerName,
           carName: found.carName,
@@ -145,8 +172,16 @@ export default function DashboardPage() {
       } else {
         setVehicleInfo(null); // Không tìm thấy biển số phù hợp
       }
+
+      const foundCheckIn = checkInCars.find(
+        (car) =>
+          car.licensePlate.replace(/\s/g, "") ===
+          formatPlate(plateText).replace(/\s/g, "")
+      );
+      if (foundCheckIn) setIsCheckedIn(true);
+      else setIsCheckedIn(false);
     }
-  }, [hasPlateData, registeredCars, plateText]);
+  }, [hasPlateData, registeredCars, plateText, checkInCars]);
 
   //Format Plate Number
   const formatPlate = (raw?: string) => {
