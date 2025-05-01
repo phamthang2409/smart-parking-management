@@ -64,6 +64,7 @@ export default function DashboardPage() {
   const [checkInCars, setCheckInCars] = useState<any[]>([]);
   const [vehicleInfo, setVehicleInfo] = useState<any>(null);
   const [isCheckedIn, setIsCheckedIn] = useState(false);
+  const [idCheckIn, setIdCheckIn] = useState<number>(0);
 
   // Check In
   async function handleCheckIn() {
@@ -72,7 +73,10 @@ export default function DashboardPage() {
     try {
       // Gửi ảnh về backend nếu có ảnh
       if (image) {
-        urlImage = await sendToBackend(image);
+        urlImage = await sendToBackend(
+          image,
+          formatPlate(vehicleInfo?.plateNumber) || formatPlate(plateText)
+        );
       }
 
       const response = await fetch(`https://localhost:7107/api/CheckInCar/`, {
@@ -82,7 +86,7 @@ export default function DashboardPage() {
           FullName: fullNameToSave,
           LicensePlate:
             formatPlate(vehicleInfo?.plateNumber) || formatPlate(plateText),
-          Price: 0,
+          Price: getPrice != null ? 5000 : 0,
           CarType: vehicleInfo?.carName || formatPlate(plateText),
           Checkin_images: urlImage,
         }),
@@ -101,7 +105,14 @@ export default function DashboardPage() {
 
   // Check Out
   async function handleCheckOut() {
-    console.log("Check Out:", formatPlate(plateText));
+    fetch(`https://localhost:7107/api/CheckInCar/${idCheckIn}`, {
+      method: "DELETE",
+    })
+      .then(() => {
+        toast.success(`Hủy check in ${idCheckIn} thành công`);
+      })
+      .catch(() => toast.error("Xảy ra lỗi khi hủy"));
+
     setIsCheckedIn(false);
   }
 
@@ -169,6 +180,7 @@ export default function DashboardPage() {
           startDate: found.startDate,
           endDate: found.endDate,
         });
+        setIdCheckIn(found.id);
       } else {
         setVehicleInfo(null); // Không tìm thấy biển số phù hợp
       }
@@ -178,8 +190,13 @@ export default function DashboardPage() {
           car.licensePlate.replace(/\s/g, "") ===
           formatPlate(plateText).replace(/\s/g, "")
       );
-      if (foundCheckIn) setIsCheckedIn(true);
-      else setIsCheckedIn(false);
+      if (foundCheckIn) {
+        setIsCheckedIn(true);
+        setIdCheckIn(foundCheckIn.id);
+      } else {
+        setIsCheckedIn(false);
+        setIdCheckIn(0);
+      }
     }
   }, [hasPlateData, registeredCars, plateText, checkInCars]);
 
