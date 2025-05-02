@@ -63,34 +63,61 @@ namespace smart_parking_system.Areas.CheckInCarControllers.Controllers
             }
         }
 
-            [HttpPost("upload")]
-            public async Task<IActionResult> UploadImage(IFormFile imageFile)
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            _logger.LogInformation("Bạn đã vào Delete CheckinCar");
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
             {
-                if (imageFile == null || imageFile.Length == 0)
+                var checkInCar = await _context.CheckInCar.FindAsync(id);
+                if (checkInCar == null)
                 {
-                    return BadRequest("Không có file ảnh nào được gửi.");
+                    return NotFound("Không tìm thấy bản ghi nào với ID đã cho.");
                 }
-
-                // Đặt đường dẫn để lưu ảnh
-                var uploadPath = Path.Combine(Directory.GetCurrentDirectory(), "UploadedFiles");
-
-                // Tạo thư mục nếu chưa tồn tại
-                if (!Directory.Exists(uploadPath))
-                {
-                    Directory.CreateDirectory(uploadPath);
-                }
-
-                // Tạo tên tệp tin duy nhất
-                var fileName = Path.GetFileName(imageFile.FileName);
-                var filePath = Path.Combine(uploadPath, fileName);
-
-                // Lưu ảnh vào server
-                using (var stream = new FileStream(filePath, FileMode.Create))
+                _context.CheckInCar.Remove(checkInCar);
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+                return Ok(new { message = "Xóa thành công!" });
+            }
+            catch (Exception e)
             {
-                    await imageFile.CopyToAsync(stream);
+                await transaction.RollbackAsync();
+                _logger.LogError($"Lỗi khi thực hiện xóa: {e.Message}");
+                return BadRequest(new { message = "Lỗi khi thực hiện xóa", error = e.Message });
+            }
+            
+            
+        }
+
+        [HttpPost("upload")]
+        public async Task<IActionResult> UploadImage(IFormFile imageFile)
+        {
+            if (imageFile == null || imageFile.Length == 0)
+            {
+                return BadRequest("Không có file ảnh nào được gửi.");
             }
 
-             // Trả về thông báo thành công với tên file đã lưu
+            // Đặt đường dẫn để lưu ảnh
+            var uploadPath = Path.Combine(Directory.GetCurrentDirectory(), "UploadedFiles");
+
+            // Tạo thư mục nếu chưa tồn tại
+            if (!Directory.Exists(uploadPath))
+            {
+                Directory.CreateDirectory(uploadPath);
+            }
+
+            // Tạo tên tệp tin duy nhất
+            var fileName = Path.GetFileName(imageFile.FileName);
+            var filePath = Path.Combine(uploadPath, fileName);
+
+            // Lưu ảnh vào server
+            using (var stream = new FileStream(filePath, FileMode.Create))
+            {
+                await imageFile.CopyToAsync(stream);
+            }
+
+            // Trả về thông báo thành công với tên file đã lưu
             return Ok(new { message = "Ảnh đã được tải lên thành công.", filePath });
         }
     }
