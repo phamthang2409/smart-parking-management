@@ -2,7 +2,7 @@
 
 namespace smart_parking_system.Models
 {
-    public class CheckInModel
+    public class CheckOutModel
     {
         [Key]
         public int ID { get; set; }
@@ -17,11 +17,8 @@ namespace smart_parking_system.Models
         [Required]
         [DataType("nvarchar(50)")]
         public string? CarType { get; set; }
-        
-        [DataType("nvarchar(255)")]
-        public string? Checkin_images { get; set; }
 
         [DataType(DataType.DateTime)]
-        public DateTime CheckInTime { get; set; }
+        public DateTime CheckOutTime { get; set; }
     }
 }

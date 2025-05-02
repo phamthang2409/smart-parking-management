@@ -76,6 +76,14 @@ namespace smart_parking_system.Areas.CheckInCarControllers.Controllers
                     return NotFound("Không tìm thấy bản ghi nào với ID đã cho.");
                 }
                 _context.CheckInCar.Remove(checkInCar);
+                await _context.CheckOutCar.AddAsync(new CheckOutModel()
+                {
+                    FullName = checkInCar.FullName,
+                    LicensePlate = checkInCar.LicensePlate,
+                    Price = checkInCar.Price,
+                    CarType = checkInCar.CarType,
+                    CheckOutTime = DateTime.Now,
+                });
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
                 return Ok(new { message = "Xóa thành công!" });
