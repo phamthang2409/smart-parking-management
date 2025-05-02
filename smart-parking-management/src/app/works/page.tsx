@@ -25,18 +25,23 @@ const ParkingSlot = ({
   label,
   status,
   onClick,
+  assignedSlot,
 }: {
   label: string;
   status: SlotStatus;
   onClick: () => void;
+  assignedSlot: string | null;
 }) => {
   const isOccupied = status === "occupied";
+  const isAssigned = assignedSlot === label;
+
+  const baseStyle = `w-24 h-12 text-base rounded-md flex items-center justify-center text-white cursor-pointer`;
+
+  let bgColor = isOccupied ? "bg-red-500" : "bg-green-600";
+  if (isAssigned) bgColor = "bg-yellow-400 text-black font-semibold";
+
   return (
-    <div
-      onClick={onClick}
-      className={`w-24 h-12 text-base rounded-md flex items-center justify-center text-white cursor-pointer
-        ${isOccupied ? "bg-red-500" : "bg-green-600"}`}
-    >
+    <div onClick={onClick} className={`${baseStyle} ${bgColor}`}>
       {label}
     </div>
   );
@@ -65,6 +70,7 @@ export default function DashboardPage() {
   const [vehicleInfo, setVehicleInfo] = useState<any>(null);
   const [isCheckedIn, setIsCheckedIn] = useState(false);
   const [idCheckIn, setIdCheckIn] = useState<number>(0);
+  const [assignedSlot, setAssignedSlot] = useState<string | null>(null);
 
   // Check In
   async function handleCheckIn() {
@@ -96,11 +102,18 @@ export default function DashboardPage() {
       }
 
       toast.success("Check in thành công");
-      setIsCheckedIn(true);
-      window.location.reload();
+
+      // Gán biển số cho ô
+      if (assignedSlot) {
+        setSlotStatuses((prev) => ({
+          ...prev,
+          [assignedSlot]: "occupied", // Đánh dấu đã có xe
+        }));
+      }
     } catch (error: any) {
       toast.error("Có lỗi xảy ra khi check in");
     }
+    window.location.reload();
   }
 
   // Check Out
@@ -162,6 +175,19 @@ export default function DashboardPage() {
     setHasPlateData(true);
     await fetchData();
     await fetchDataCheckInCar();
+
+    // Gán một ô còn trống ngẫu nhiên trong bãi giữ xe
+    const availableSlots = Object.entries(slotStatuses)
+      .filter(([_, status]) => status === "available")
+      .map(([label]) => label);
+
+    if (availableSlots.length > 0) {
+      const randomSlot =
+        availableSlots[Math.floor(Math.random() * availableSlots.length)];
+      setAssignedSlot(randomSlot);
+    } else {
+      toast.error("Không còn chỗ trống!");
+    }
   };
 
   useEffect(() => {
@@ -348,6 +374,12 @@ export default function DashboardPage() {
                             </p>
                           </>
                         )}
+
+                        {assignedSlot && (
+                          <p>
+                            <strong>Vị trí đỗ xe:</strong> {assignedSlot}
+                          </p>
+                        )}
                       </CardContent>
                     </Card>
                   </>
@@ -406,6 +438,7 @@ export default function DashboardPage() {
                             label={label}
                             status={slotStatuses[label]}
                             onClick={() => handleSlotClick(label)}
+                            assignedSlot={assignedSlot}
                           />
                         );
                       })}
@@ -430,6 +463,7 @@ export default function DashboardPage() {
                             label={label}
                             status={slotStatuses[label]}
                             onClick={() => handleSlotClick(label)}
+                            assignedSlot={assignedSlot}
                           />
                         );
                       })}

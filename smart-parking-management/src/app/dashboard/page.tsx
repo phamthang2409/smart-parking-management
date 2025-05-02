@@ -5,6 +5,8 @@ import { StatCard } from "@/components/dashboard/StatCard";
 import { ActivityChart } from "@/components/dashboard/ActivityChart";
 import { ParkingSpaceStatus } from "@/components/dashboard/ParkingSpaceStatus";
 import { RecentVehicles } from "@/components/dashboard/RecentVehicles";
+import { checkInCar } from "../../app/hooks/useCheckInCar";
+import { checkOutCar } from "../../app/hooks/useCheckOutCar";
 import {
   Car,
   CarFront,
@@ -13,28 +15,65 @@ import {
   ParkingCircle,
   Users,
 } from "lucide-react";
-import { dashboardStats, vehicleActivityData, currentVehicles } from "@/lib/data/mockData";
+import {
+  dashboardStats,
+  vehicleActivityData,
+  currentVehicles,
+} from "@/lib/data/mockData";
 import { formatCurrency } from "@/lib/utils";
 import { useState, useEffect } from "react";
 
 export default function DashboardPage() {
   const formatMoney = (amount: number) => {
-    return formatCurrency(amount, 'VND');
+    return formatCurrency(amount, "VND");
+  };
+  const [currentTime, setCurrentTime] = useState("");
+  const [checkInCars, setCheckInCars] = useState<any[]>([]);
+  const [checkOutCars, setCheckOutCars] = useState<any[]>([]);
+
+  const fetchDataCheckInCar = async () => {
+    const data = await checkInCar();
+    const formattedData = data.map((item: any) => ({
+      id: item.id,
+      fullName: item.fullName,
+      licensePlate: item.licensePlate,
+      price: item.price,
+      carType: item.carType,
+      checkin_images: item.checkin_images,
+      checkInTime: item.checkInTime,
+      checkOutTime: item.checkOutTime,
+    }));
+    setCheckInCars(formattedData);
   };
 
-  // Client-side time display
-  const [currentTime, setCurrentTime] = useState("");
+  const fetchDataCheckOutCar = async () => {
+    const data = await checkOutCar();
+    const formattedData = data.map((item: any) => ({
+      id: item.id,
+      fullName: item.fullName,
+      licensePlate: item.licensePlate,
+      price: item.price,
+      carType: item.carType,
+      checkOutTime: item.checkOutTime,
+    }));
+    setCheckOutCars(formattedData);
+  };
 
   useEffect(() => {
     // Set initial time
     const now = new Date();
-    setCurrentTime(now.toLocaleString('vi-VN'));
+    setCurrentTime(now.toLocaleString("vi-VN"));
 
     // Update time every minute
     const timer = setInterval(() => {
       const now = new Date();
-      setCurrentTime(now.toLocaleString('vi-VN'));
+      setCurrentTime(now.toLocaleString("vi-VN"));
     }, 60000);
+
+    //Get check in car
+    fetchDataCheckInCar();
+    //Get check out car
+    fetchDataCheckOutCar();
 
     return () => clearInterval(timer);
   }, []);
@@ -52,14 +91,14 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
           <StatCard
             title="Tổng xe hiện tại"
-            value={dashboardStats.vehiclesIn}
+            value={checkInCars.length}
             icon={Car}
             trend="up"
             trendValue="+10 so với hôm qua"
           />
           <StatCard
             title="Xe đã rời đi"
-            value={dashboardStats.vehiclesOut}
+            value={checkOutCars.length}
             icon={CarFront}
             trend="neutral"
             trendValue="-3 so với hôm qua"
@@ -72,7 +111,7 @@ export default function DashboardPage() {
             trendValue="+15% so với hôm qua"
           />
           <StatCard
-            title="Xe đăng ký tháng"
+            title="Xe đã đăng ký"
             value={dashboardStats.registeredVehicles}
             icon={Users}
             trend="up"
