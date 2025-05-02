@@ -96,8 +96,8 @@ export default function DashboardPage() {
       }
 
       toast.success("Check in thành công");
-
       setIsCheckedIn(true);
+      window.location.reload();
     } catch (error: any) {
       toast.error("Có lỗi xảy ra khi check in");
     }
@@ -109,9 +109,10 @@ export default function DashboardPage() {
       method: "DELETE",
     })
       .then(() => {
-        toast.success(`Hủy check in ${idCheckIn} thành công`);
+        toast.success(`Check out ${idCheckIn} thành công`);
+        window.location.reload();
       })
-      .catch(() => toast.error("Xảy ra lỗi khi hủy"));
+      .catch(() => toast.error("Xảy ra lỗi khi Check out"));
 
     setIsCheckedIn(false);
   }
