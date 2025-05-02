@@ -18,7 +18,7 @@ export default function RegistrationsPage() {
   const [currentTab, setCurrentTab] = useState("new");
   const [registeredCars, setRegisteredCars] = useState([]);
 
-  // ✅ Tách fetchData ra ngoài để có thể truyền props
+  // Tách fetchData ra ngoài để có thể truyền props
   const fetchData = async () => {
     const data = await registrationCar();
     const formattedData = data.map((item: any) => ({
@@ -34,7 +34,7 @@ export default function RegistrationsPage() {
     setRegisteredCars(formattedData);
   };
 
-  // ✅ Tự động gọi lại khi chuyển tab sang "list"
+  // Tự động gọi lại khi chuyển tab sang "list"
   useEffect(() => {
     if (currentTab === "list") {
       fetchData();
@@ -71,7 +71,7 @@ export default function RegistrationsPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {/* ✅ Truyền fetchData để gọi lại sau khi POST */}
+                {/*Truyền fetchData để gọi lại sau khi POST */}
                 <RegistrationForm />/
               </CardContent>
             </Card>
