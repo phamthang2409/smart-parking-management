@@ -17,7 +17,7 @@ const ParkingSlot = ({
     "w-24 h-12 text-base rounded-md flex items-center justify-center text-white cursor-default";
 
   let bgColor = isOccupied ? "bg-red-500" : "bg-green-600";
-  if (isAssigned) bgColor = "bg-yellow-400 text-black font-semibold";
+ 
 
   return <div className={`${baseStyle} ${bgColor}`}>{label}</div>;
 };

@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { registrationCar } from "@/app/hooks/useRegistrationCar";
 import { checkInCar } from "@/app/hooks/useCheckInCar";
 
-import VehicleInfoTabs from "../../components/works/vehicleInfo";
+import VehicleInfoTabs from "@/components/works/VehicleInfo";
 import TasksTabs from "../../components/works/Tasks";
 
 type SlotStatus = "available" | "occupied";
