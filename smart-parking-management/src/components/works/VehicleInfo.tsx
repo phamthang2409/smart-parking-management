@@ -35,6 +35,7 @@ export default function VehicleInfo({
 }: any) {
   const [vehicleType, setVehicleType] = useState("Xe máy"); //Thêm state này
   const [hasPlateData, setHasPlateData] = useState(false);
+
   const getPrice = (type: string): string => {
     if (type === "Xe máy") return "5,000₫";
     if (type === "Ô tô") return "10,000₫";
@@ -126,7 +127,12 @@ export default function VehicleInfo({
           FullName: fullNameToSave,
           LicensePlate:
             formatPlate(vehicleInfo?.plateNumber) || formatPlate(plateText),
-          Price: getPrice(vehicleType) === "5,000₫" ? 5000 : 20000,
+          Price:
+            fullNameToSave == vehicleInfo?.customerName
+              ? 0
+              : getPrice(vehicleType) === "5,000₫"
+              ? 5000
+              : 20000,
           CarType: vehicleInfo?.carName || vehicleType,
           Checkin_images: urlImage,
           AssignedSlot: assignedSlot,
@@ -187,8 +193,6 @@ export default function VehicleInfo({
       setIsCheckedIn(false);
     }
   }, [hasPlateData, registeredCars, plateText, checkInCars]);
-
-  // ... (các import và state giữ nguyên như bạn có ở đầu)
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
