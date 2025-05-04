@@ -15,16 +15,6 @@ export const dashboardStats = {
   dailyRevenue: 8500000,
 };
 
-// Vehicle activity data for charts
-export const vehicleActivityData = Array.from({ length: 7 }, (_, i) => {
-  const date = subDays(new Date(), 6 - i);
-  return {
-    date: format(date, "dd/MM"),
-    vehiclesIn: 100 + Math.floor(Math.random() * 50),
-    vehiclesOut: 80 + Math.floor(Math.random() * 40),
-  };
-});
-
 // Hourly data for today
 export const hourlyData = Array.from({ length: 24 }, (_, i) => {
   return {

@@ -15,13 +15,11 @@ import {
   ParkingCircle,
   Users,
 } from "lucide-react";
-import {
-  dashboardStats,
-  vehicleActivityData,
-  currentVehicles,
-} from "@/lib/data/mockData";
+import { dashboardStats, currentVehicles } from "@/lib/data/mockData";
 import { formatCurrency } from "@/lib/utils";
 import { useState, useEffect } from "react";
+import { registrationCar } from "../hooks/useRegistrationCar";
+import { format, subDays } from "date-fns";
 
 export default function DashboardPage() {
   const formatMoney = (amount: number) => {
@@ -30,6 +28,28 @@ export default function DashboardPage() {
   const [currentTime, setCurrentTime] = useState("");
   const [checkInCars, setCheckInCars] = useState<any[]>([]);
   const [checkOutCars, setCheckOutCars] = useState<any[]>([]);
+  const [registeredCars, setRegisteredCars] = useState<any[]>([]);
+
+  const allSlots = Array.from("ABCDEFGHIKL".split("")).flatMap((row) =>
+    [1, 2, 3, 4].map((col) => `${row}${col}`)
+  );
+
+  const totalSlots = allSlots.length;
+
+  const fetchDataRegisteredCar = async () => {
+    const data = await registrationCar();
+    const formattedData = data.map((item: any) => ({
+      id: item.id,
+      customerName: item.customerName,
+      licensePlate: item.licensePlate,
+      carName: item.carName,
+      packageName: item.packageName,
+      startDate: item.startDate,
+      endDate: item.endDate,
+      state: item.state,
+    }));
+    setRegisteredCars(formattedData);
+  };
 
   const fetchDataCheckInCar = async () => {
     const data = await checkInCar();
@@ -59,6 +79,35 @@ export default function DashboardPage() {
     setCheckOutCars(formattedData);
   };
 
+  // Vehicle activity data for charts
+  const vehicleActivityData = Array.from({ length: 7 }, (_, i) => {
+    const dateObj = subDays(new Date(), 6 - i);
+    const dateKey = format(dateObj, "yyyy-MM-dd"); // Key chuẩn để so sánh
+    const displayDate = format(dateObj, "dd/MM"); // Để hiển thị
+
+    // Đếm số xe check-in trong ngày
+    const vehiclesIn = checkInCars.filter((car) => {
+      const checkInDate = car.checkInTime
+        ? format(new Date(car.checkInTime), "yyyy-MM-dd")
+        : null;
+      return checkInDate === dateKey;
+    }).length;
+
+    // Đếm số xe check-out trong ngày
+    const vehiclesOut = checkOutCars.filter((car) => {
+      const checkOutDate = car.checkOutTime
+        ? format(new Date(car.checkOutTime), "yyyy-MM-dd")
+        : null;
+      return checkOutDate === dateKey;
+    }).length;
+
+    return {
+      date: displayDate,
+      vehiclesIn,
+      vehiclesOut,
+    };
+  });
+
   useEffect(() => {
     // Set initial time
     const now = new Date();
@@ -74,6 +123,8 @@ export default function DashboardPage() {
     fetchDataCheckInCar();
     //Get check out car
     fetchDataCheckOutCar();
+    //Get registered car
+    fetchDataRegisteredCar();
 
     return () => clearInterval(timer);
   }, []);
@@ -112,7 +163,7 @@ export default function DashboardPage() {
           />
           <StatCard
             title="Xe đã đăng ký"
-            value={dashboardStats.registeredVehicles}
+            value={registeredCars.length}
             icon={Users}
             trend="up"
             trendValue="+5 trong tháng này"
@@ -125,8 +176,8 @@ export default function DashboardPage() {
             title="Hoạt động xe trong 7 ngày gần đây"
           />
           <ParkingSpaceStatus
-            available={dashboardStats.availableSpaces}
-            total={dashboardStats.totalCapacity}
+            available={totalSlots - checkInCars.length}
+            total={totalSlots}
           />
           <div className="col-span-1 lg:col-span-6">
             <RecentVehicles vehicles={currentVehicles.slice(0, 10)} />

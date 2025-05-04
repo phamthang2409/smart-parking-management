@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Card } from "@/components/ui/card";
 
 const ParkingSlot = ({
@@ -32,13 +32,17 @@ const ParkingSlot = ({
 export default function TasksTabs({
   assignedSlot,
   checkInCars,
+  allSlots,
 }: {
   assignedSlot: string | null;
   checkInCars: any[];
+  allSlots: string[];
 }) {
   const [slotStatuses, setSlotStatuses] = React.useState<
     Record<string, "available" | "occupied">
   >({});
+
+  const [countArr, setCountArr] = useState(0);
 
   React.useEffect(() => {
     // Tạo danh sách tất cả các slot
@@ -52,6 +56,8 @@ export default function TasksTabs({
     allSlots.forEach((slot) => {
       newStatuses[slot] = "available";
     });
+
+    setCountArr(allSlots.length);
 
     // Đánh dấu occupied theo dữ liệu DB
     checkInCars.forEach((car) => {
