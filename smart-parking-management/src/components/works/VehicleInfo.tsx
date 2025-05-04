@@ -14,7 +14,6 @@ import { toast } from "sonner";
 import { sendToBackend } from "@/app/api/uploadPlate";
 
 export default function VehicleInfo({
-  sendToBackend,
   image,
   setImage,
   plateText,
@@ -34,15 +33,13 @@ export default function VehicleInfo({
   idCheckIn,
   setIdCheckIn,
 }: any) {
-  const [vehicleType, setVehicleType] = useState("Xe máy"); // ✅ Thêm state này
+  const [vehicleType, setVehicleType] = useState("Xe máy"); //Thêm state này
   const [hasPlateData, setHasPlateData] = useState(false);
   const getPrice = (type: string): string => {
     if (type === "Xe máy") return "5,000₫";
     if (type === "Ô tô") return "10,000₫";
     return "Không xác định";
   };
-  
-  
 
   const formatData = (dateString: string) => {
     const date = new Date(dateString);
@@ -111,7 +108,7 @@ export default function VehicleInfo({
   };
 
   async function handleCheckIn() {
-    const fullNameToSave = vehicleInfo?.ownerName || "Khách / Vãng lai";
+    const fullNameToSave = vehicleInfo?.customerName || "Khách / Vãng lai";
     let urlImage: string | null = null;
 
     try {
@@ -132,6 +129,7 @@ export default function VehicleInfo({
           Price: getPrice(vehicleType) === "5,000₫" ? 5000 : 20000,
           CarType: vehicleInfo?.carName || vehicleType,
           Checkin_images: urlImage,
+          AssignedSlot: assignedSlot,
         }),
       });
 
@@ -141,13 +139,7 @@ export default function VehicleInfo({
       }
 
       toast.success("Check in thành công");
-
-      if (assignedSlot) {
-        setSlotStatuses((prev: any) => ({
-          ...prev,
-          [assignedSlot]: "occupied",
-        }));
-      }
+      window.location.reload();
       setIsCheckedIn(true);
     } catch {
       toast.error("Có lỗi xảy ra khi check in");
@@ -168,170 +160,172 @@ export default function VehicleInfo({
   }
 
   useEffect(() => {
-    if (hasPlateData && registeredCars.length > 0) {
-      const found = registeredCars.find(
-        (car: any) =>
-          car.licensePlate.replace(/\s/g, "") ===
-          formatPlate(plateText).replace(/\s/g, "")
-      );
-      if (found) {
-        setVehicleInfo(found);
-        setIdCheckIn(found.id);
-      } else {
-        setVehicleInfo(null);
-      }
+    if (!hasPlateData || registeredCars.length === 0) return;
 
-      const foundCheckIn = checkInCars.find(
-        (car: any) =>
-          car.licensePlate.replace(/\s/g, "") ===
-          formatPlate(plateText).replace(/\s/g, "")
-      );
-      if (foundCheckIn) {
-        setIsCheckedIn(true);
-        setIdCheckIn(foundCheckIn.id);
-      } else {
-        setIsCheckedIn(false);
-        setIdCheckIn(0);
-      }
+    const normalizedPlate = formatPlate(plateText).replace(/\s/g, "");
+
+    const foundVehicle = registeredCars.find(
+      (car: any) => car.licensePlate.replace(/\s/g, "") === normalizedPlate
+    );
+
+    if (foundVehicle) {
+      setVehicleInfo(foundVehicle);
+      setIdCheckIn(foundVehicle.id);
+    } else {
+      setVehicleInfo(null);
+      setIdCheckIn(0);
+    }
+
+    const foundCheckIn = checkInCars.find(
+      (car: any) => car.licensePlate.replace(/\s/g, "") === normalizedPlate
+    );
+
+    if (foundCheckIn) {
+      setIsCheckedIn(true);
+      setIdCheckIn(foundCheckIn.id);
+    } else {
+      setIsCheckedIn(false);
     }
   }, [hasPlateData, registeredCars, plateText, checkInCars]);
 
   // ... (các import và state giữ nguyên như bạn có ở đầu)
 
-return (
-  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-    <div className="space-y-4">
-      {!hasPlateData ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Biển số xe</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-gray-500">Chưa có biển số xe</p>
-          </CardContent>
-        </Card>
-      ) : (
-        <>
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="space-y-4">
+        {!hasPlateData ? (
           <Card>
             <CardHeader>
               <CardTitle>Biển số xe</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-2xl font-bold">{formatPlate(plateText)}</p>
+              <p className="text-gray-500">Chưa có biển số xe</p>
+            </CardContent>
+          </Card>
+        ) : (
+          <>
+            <Card>
+              <CardHeader>
+                <CardTitle>Biển số xe</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-bold">{formatPlate(plateText)}</p>
 
-              {/* Lựa chọn loại xe */}
-              <div className="flex gap-2 mt-4">
-                <button
-                  className={`px-3 py-1 rounded border ${
-                    vehicleType === "Xe máy"
-                      ? "bg-blue-500 text-white"
-                      : "bg-white text-gray-800 border-gray-300"
-                  }`}
-                  onClick={() => setVehicleType("Xe máy")}
-                >
-                  Xe máy
-                </button>
-                <button
-                  className={`px-3 py-1 rounded border ${
-                    vehicleType === "Ô tô"
-                      ? "bg-blue-500 text-white"
-                      : "bg-white text-gray-800 border-gray-300"
-                  }`}
-                  onClick={() => setVehicleType("Ô tô")}
-                >
-                  Ô tô
-                </button>
-              </div>
-
-              {/* Nút Check In/Out */}
-              <div className="mt-4 space-x-4">
-                {!isCheckedIn ? (
+                {/* Lựa chọn loại xe */}
+                <div className="flex gap-2 mt-4">
                   <button
-                    onClick={handleCheckIn}
-                    className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                    className={`px-3 py-1 rounded border ${
+                      vehicleType === "Xe máy"
+                        ? "bg-blue-500 text-white"
+                        : "bg-white text-gray-800 border-gray-300"
+                    }`}
+                    onClick={() => setVehicleType("Xe máy")}
                   >
-                    Check In
+                    Xe máy
                   </button>
+                  <button
+                    className={`px-3 py-1 rounded border ${
+                      vehicleType === "Ô tô"
+                        ? "bg-blue-500 text-white"
+                        : "bg-white text-gray-800 border-gray-300"
+                    }`}
+                    onClick={() => setVehicleType("Ô tô")}
+                  >
+                    Ô tô
+                  </button>
+                </div>
+
+                {/* Nút Check In/Out */}
+                <div className="mt-4 space-x-4">
+                  {!isCheckedIn ? (
+                    <button
+                      onClick={handleCheckIn}
+                      className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                    >
+                      Check In
+                    </button>
+                  ) : (
+                    <button
+                      onClick={handleCheckOut}
+                      className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+                    >
+                      Check Out
+                    </button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Thông tin chi tiết</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {vehicleInfo ? (
+                  <>
+                    <p>
+                      <strong>Chủ xe:</strong> {vehicleInfo.customerName}
+                    </p>
+                    <p>
+                      <strong>Xe:</strong> {vehicleInfo.carName}
+                    </p>
+                    <p>
+                      <strong>Gói:</strong> {vehicleInfo.packageName}
+                    </p>
+                    <p>
+                      <strong>Ngày bắt đầu:</strong>{" "}
+                      {formatData(vehicleInfo.startDate)}
+                    </p>
+                    <p>
+                      <strong>Ngày kết thúc:</strong>{" "}
+                      {formatData(vehicleInfo.endDate)}
+                    </p>
+                  </>
                 ) : (
-                  <button
-                    onClick={handleCheckOut}
-                    className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
-                  >
-                    Check Out
-                  </button>
+                  <>
+                    <p>
+                      <strong>Loại xe:</strong> {vehicleType}
+                    </p>
+                    <p>
+                      <strong>Phí gửi:</strong> {getPrice(vehicleType)}
+                    </p>
+                  </>
                 )}
-              </div>
-            </CardContent>
-          </Card>
+                {assignedSlot && (
+                  <p>
+                    <strong>Vị trí đỗ xe:</strong> {assignedSlot}
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+          </>
+        )}
+      </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Thông tin chi tiết</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {vehicleInfo ? (
-                <>
-                  <p>
-                    <strong>Chủ xe:</strong> {vehicleInfo.ownerName}
-                  </p>
-                  <p>
-                    <strong>Xe:</strong> {vehicleInfo.carName}
-                  </p>
-                  <p>
-                    <strong>Gói:</strong> {vehicleInfo.packageName}
-                  </p>
-                  <p>
-                    <strong>Ngày bắt đầu:</strong>{" "}
-                    {formatData(vehicleInfo.startDate)}
-                  </p>
-                  <p>
-                    <strong>Ngày kết thúc:</strong>{" "}
-                    {formatData(vehicleInfo.endDate)}
-                  </p>
-                </>
-              ) : (
-                <>
-                  <p>
-                    <strong>Loại xe:</strong> {vehicleType}
-                  </p>
-                  <p>
-                    <strong>Phí gửi:</strong> {getPrice(vehicleType)}
-                  </p>
-                </>
-              )}
-              {assignedSlot && (
-                <p>
-                  <strong>Vị trí đỗ xe:</strong> {assignedSlot}
-                </p>
-              )}
-            </CardContent>
-          </Card>
-        </>
-      )}
+      {/* Cột camera */}
+      <Card className="bg-blue-50 w-full md:w-[500px]">
+        <CardHeader>
+          <CardTitle>Quét biển số xe</CardTitle>
+          <CardDescription>
+            Chụp và nhận diện biển số bằng camera máy tính
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <CameraCapture onCapture={setImage} />
+        </CardContent>
+      </Card>
+
+      {/* Cột kết quả nhận diện */}
+      <Card className="bg-blue-50 w-full md:w-[500px]">
+        <CardHeader>
+          <CardTitle>Nhận diện biển số</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {image && (
+            <PlateRecognition image={image} onResult={handlePlateData} />
+          )}
+        </CardContent>
+      </Card>
     </div>
-
-    {/* Cột camera */}
-    <Card className="bg-blue-50 w-full md:w-[500px]">
-      <CardHeader>
-        <CardTitle>Quét biển số xe</CardTitle>
-        <CardDescription>
-          Chụp và nhận diện biển số bằng camera máy tính
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <CameraCapture onCapture={setImage} />
-      </CardContent>
-    </Card>
-
-    {/* Cột kết quả nhận diện */}
-    <Card className="bg-blue-50 w-full md:w-[500px]">
-      <CardHeader>
-        <CardTitle>Nhận diện biển số</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {image && <PlateRecognition image={image} onResult={handlePlateData} />}
-      </CardContent>
-    </Card>
-  </div>
-);
+  );
 }

@@ -48,31 +48,9 @@ export default function DashboardPage() {
   };
 
   useEffect(() => {
-    if (currentTab === "tasks") setCurrentTab("tasks");
-    if (hasPlateData && registeredCars.length > 0) {
-      const formattedPlate = plateText.replace(/\s/g, "");
-      const found = registeredCars.find(
-        (car) => car.licensePlate.replace(/\s/g, "") === formattedPlate
-      );
-      if (found) {
-        setVehicleInfo(found);
-        setIdCheckIn(found.id);
-      } else {
-        setVehicleInfo(null);
-      }
-
-      const foundCheckIn = checkInCars.find(
-        (car) => car.licensePlate.replace(/\s/g, "") === formattedPlate
-      );
-      if (foundCheckIn) {
-        setIsCheckedIn(true);
-        setIdCheckIn(foundCheckIn.id);
-      } else {
-        setIsCheckedIn(false);
-        setIdCheckIn(0);
-      }
-    }
-  }, [hasPlateData, registeredCars, plateText, checkInCars]);
+    fetchData();
+    fetchDataCheckInCar();
+  }, []);
 
   return (
     <DashboardLayout>
@@ -113,16 +91,11 @@ export default function DashboardPage() {
               setAssignedSlot={setAssignedSlot}
               idCheckIn={idCheckIn}
               setIdCheckIn={setIdCheckIn}
-              fetchData={fetchData}
-              fetchDataCheckInCar={fetchDataCheckInCar}
             />
           </TabsContent>
 
           <TabsContent value="tasks">
-            <TasksTabs
-              slotStatuses={slotStatuses}
-              assignedSlot={assignedSlot}
-            />
+            <TasksTabs assignedSlot={assignedSlot} checkInCars={checkInCars} />
           </TabsContent>
         </Tabs>
       </div>
