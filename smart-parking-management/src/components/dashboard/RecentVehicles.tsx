@@ -49,8 +49,11 @@ export function RecentVehicles({ vehicles }: RecentVehiclesProps) {
                   <TableCell className="font-medium">
                     {vehicle.licensePlate}
                     {vehicle.isMonthly && (
-                      <Badge variant="outline" className="ml-2 bg-blue-50 text-xs">
-                        Xe tháng
+                      <Badge
+                        variant="outline"
+                        className="ml-2 bg-blue-50 text-xs"
+                      >
+                        {vehicle.isMonthly}
                       </Badge>
                     )}
                   </TableCell>
@@ -58,9 +61,7 @@ export function RecentVehicles({ vehicles }: RecentVehiclesProps) {
                   <TableCell>{vehicle.entryTime}</TableCell>
                   <TableCell>{vehicle.parkingSpot}</TableCell>
                   <TableCell>
-                    <Badge variant="secondary">
-                      {vehicle.status}
-                    </Badge>
+                    <Badge variant="secondary">{vehicle.status}</Badge>
                   </TableCell>
                 </TableRow>
               ))}

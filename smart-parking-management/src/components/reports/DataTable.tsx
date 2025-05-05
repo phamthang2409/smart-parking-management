@@ -1,6 +1,4 @@
-"use client";
-
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -19,31 +17,125 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Search, FileText, Calendar } from "lucide-react";
-import { vehicleHistory } from "@/lib/data/mockData";
 import { formatCurrency } from "@/lib/utils";
 import { toast } from "sonner";
-import { exportToPDF, exportToExcel, exportToCSV } from "@/lib/utils/export-utils";
+import { checkInCar } from "@/app/hooks/useCheckInCar";
+import { checkOutCar } from "@/app/hooks/useCheckOutCar";
+import {
+  format,
+  startOfDay,
+  startOfWeek,
+  startOfMonth,
+  startOfYear,
+  isAfter,
+} from "date-fns";
+import {
+  exportToCSV,
+  exportToExcel,
+  exportToPDF,
+} from "@/lib/utils/export-utils";
 
 export function DataTable() {
   const [searchTerm, setSearchTerm] = useState("");
   const [timeRange, setTimeRange] = useState("week");
   const [exportFormat, setExportFormat] = useState("excel");
   const [isExporting, setIsExporting] = useState(false);
+  const [combinedData, setCombinedData] = useState<any[]>([]);
 
-  // Filter data based on search term
-  const filteredData = vehicleHistory.filter(
-    (item) =>
-      item.licensePlate.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.type.toLowerCase().includes(searchTerm.toLowerCase())
+  const fetchDataCheckInCar = async () => {
+    const data = await checkInCar();
+    const formattedData = data.map((item: any) => ({
+      id: item.id,
+      fullName: item.fullName,
+      licensePlate: item.licensePlate,
+      carType: item.carType,
+      checkInTime: item.checkInTime,
+      checkOutTime: item.checkOutTime,
+    }));
+    return formattedData;
+  };
+
+  const fetchDataCheckOutCar = async () => {
+    const data = await checkOutCar();
+    const formattedData = data.map((item: any) => ({
+      id: item.id,
+      licensePlate: item.licensePlate,
+      price: item.price,
+      checkOutTime: item.checkOutTime,
+    }));
+    return formattedData;
+  };
+
+  useEffect(() => {
+    const getData = async () => {
+      const checkInCars = await fetchDataCheckInCar();
+      const checkOutCars = await fetchDataCheckOutCar();
+
+      // Nối dữ liệu checkIn và checkOut vào một mảng thống nhất
+      const combinedData = checkInCars.map((checkInItem: any) => {
+        const checkOutItem = checkOutCars.find(
+          (item: any) => item.licensePlate === checkInItem.licensePlate
+        );
+
+        return {
+          ...checkInItem,
+          checkOutTime: checkOutItem ? checkOutItem.checkOutTime : null,
+          price: checkOutItem ? checkOutItem.price : 0,
+        };
+      });
+
+      setCombinedData(combinedData);
+    };
+
+    getData();
+  }, []);
+
+  const filterDataByTimeRange = (data: any[]) => {
+    const now = new Date();
+    let startDate: Date | null = null;
+
+    switch (timeRange) {
+      case "today":
+        startDate = startOfDay(now);
+        break;
+      case "week":
+        startDate = startOfWeek(now, { weekStartsOn: 1 }); // Tuần bắt đầu từ thứ Hai
+        break;
+      case "month":
+        startDate = startOfMonth(now);
+        break;
+      case "year":
+        startDate = startOfYear(now);
+        break;
+      default:
+        return data;
+    }
+
+    // Lọc dữ liệu dựa trên mốc thời gian
+    return data.filter((item) => {
+      const checkInDate = item.checkInTime ? new Date(item.checkInTime) : null;
+      const checkOutDate = item.checkOutTime
+        ? new Date(item.checkOutTime)
+        : null;
+      return (
+        (checkInDate && isAfter(checkInDate, startDate)) ||
+        (checkOutDate && isAfter(checkOutDate, startDate))
+      );
+    });
+  };
+
+  // Filter data based on search term and time range
+  const filteredData = filterDataByTimeRange(
+    combinedData.filter(
+      (item) =>
+        item.licensePlate.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.carType.toLowerCase().includes(searchTerm.toLowerCase())
+    )
   );
 
   // Calculate summary data
   const totalVehicles = filteredData.length;
-  const totalRevenue = filteredData.reduce((sum, item) => sum + item.fee, 0);
-  const vehicleTypes = filteredData.reduce((acc, item) => {
-    acc[item.type] = (acc[item.type] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
+  const totalRevenue = filteredData.reduce((sum, item) => sum + item.price, 0);
 
   const handleExport = () => {
     setIsExporting(true);
@@ -51,58 +143,65 @@ export function DataTable() {
     try {
       // Chuẩn bị cột cho xuất báo cáo
       const columns = [
-        { header: 'Biển số', key: 'licensePlate' },
-        { header: 'Loại xe', key: 'type' },
-        { header: 'Thời gian vào', key: 'entryTime' },
-        { header: 'Thời gian ra', key: 'exitTime' },
-        { header: 'Thời gian gửi', key: 'duration' },
+        { header: "Biển số", key: "licensePlate" },
+        { header: "Loại xe", key: "carType" },
+        { header: "Thời gian vào", key: "checkInTime" },
+        { header: "Thời gian ra", key: "checkOutTime" },
         {
-          header: 'Phí gửi xe',
-          key: 'fee',
-          format: (value: number) => formatCurrency(value)
+          header: "Phí gửi xe",
+          key: "price",
+          format: (value: number) => formatCurrency(value),
         },
       ];
 
       // Tên file
       const rangeText =
-        timeRange === 'today'
-          ? 'Hom-nay'
-          : timeRange === 'week'
-            ? 'Tuan-nay'
-            : timeRange === 'month'
-              ? 'Thang-nay'
-              : 'Nam-nay';
+        timeRange === "today"
+          ? "Hom-nay"
+          : timeRange === "week"
+          ? "Tuan-nay"
+          : timeRange === "month"
+          ? "Thang-nay"
+          : "Nam-nay";
 
       const filename = `Bao-cao-giao-dich-${rangeText}-${new Date().getTime()}`;
 
       // Tiêu đề
-      const title = 'BÁO CÁO GIAO DỊCH BÃI ĐỖ XE';
+      const title = "BÁO CÁO GIAO DỊCH BÃI ĐỖ XE";
       const subtitle = `Khoảng thời gian: ${
-        timeRange === 'today'
-          ? 'Hôm nay'
-          : timeRange === 'week'
-            ? 'Tuần này'
-            : timeRange === 'month'
-              ? 'Tháng này'
-              : 'Năm nay'
+        timeRange === "today"
+          ? "Hôm nay"
+          : timeRange === "week"
+          ? "Tuần này"
+          : timeRange === "month"
+          ? "Tháng này"
+          : "Năm nay"
       }`;
 
       // Xuất theo định dạng đã chọn
-      if (exportFormat === 'excel') {
-        exportToExcel(filteredData, columns, filename, 'Giao dịch bãi đỗ xe');
-      } else if (exportFormat === 'pdf') {
+      if (exportFormat === "excel") {
+        exportToExcel(filteredData, columns, filename, "Giao dịch bãi đỗ xe");
+      } else if (exportFormat === "pdf") {
         exportToPDF(filteredData, columns, filename, title, subtitle);
-      } else if (exportFormat === 'csv') {
+      } else if (exportFormat === "csv") {
         exportToCSV(filteredData, columns, filename);
       }
 
-      toast.success(`Xuất báo cáo dạng ${exportFormat.toUpperCase()} thành công`);
+      toast.success(
+        `Xuất báo cáo dạng ${exportFormat.toUpperCase()} thành công`
+      );
     } catch (error) {
-      console.error('Export error:', error);
-      toast.error('Có lỗi xảy ra khi xuất báo cáo');
+      console.error("Export error:", error);
+      toast.error("Có lỗi xảy ra khi xuất báo cáo");
     } finally {
       setIsExporting(false);
     }
+  };
+
+  const formatTime = (time: string | null) => {
+    if (!time) return "-";
+    const formattedTime = format(new Date(time), "dd/MM/yyyy HH:mm");
+    return formattedTime;
   };
 
   return (
@@ -118,10 +217,7 @@ export function DataTable() {
           />
         </div>
         <div className="flex gap-2">
-          <Select
-            defaultValue={timeRange}
-            onValueChange={setTimeRange}
-          >
+          <Select defaultValue={timeRange} onValueChange={setTimeRange}>
             <SelectTrigger>
               <SelectValue placeholder="Thời gian" />
             </SelectTrigger>
@@ -132,10 +228,7 @@ export function DataTable() {
               <SelectItem value="year">Năm nay</SelectItem>
             </SelectContent>
           </Select>
-          <Select
-            defaultValue={exportFormat}
-            onValueChange={setExportFormat}
-          >
+          <Select defaultValue={exportFormat} onValueChange={setExportFormat}>
             <SelectTrigger>
               <SelectValue placeholder="Định dạng" />
             </SelectTrigger>
@@ -155,27 +248,6 @@ export function DataTable() {
         </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-3">
-        <div className="rounded-lg border p-3">
-          <div className="text-sm text-muted-foreground">Tổng số xe</div>
-          <div className="text-2xl font-bold">{totalVehicles}</div>
-        </div>
-        <div className="rounded-lg border p-3">
-          <div className="text-sm text-muted-foreground">Tổng doanh thu</div>
-          <div className="text-2xl font-bold">{formatCurrency(totalRevenue)}</div>
-        </div>
-        <div className="rounded-lg border p-3">
-          <div className="text-sm text-muted-foreground">Khoảng thời gian</div>
-          <div className="flex items-center gap-2 text-lg font-medium">
-            <Calendar className="h-4 w-4" />
-            {timeRange === "today" && "Hôm nay"}
-            {timeRange === "week" && "Tuần này"}
-            {timeRange === "month" && "Tháng này"}
-            {timeRange === "year" && "Năm nay"}
-          </div>
-        </div>
-      </div>
-
       <div className="rounded-md border">
         <Table>
           <TableHeader>
@@ -184,7 +256,6 @@ export function DataTable() {
               <TableHead>Loại xe</TableHead>
               <TableHead>Thời gian vào</TableHead>
               <TableHead>Thời gian ra</TableHead>
-              <TableHead>Thời gian gửi</TableHead>
               <TableHead className="text-right">Phí gửi xe</TableHead>
             </TableRow>
           </TableHeader>
@@ -192,13 +263,14 @@ export function DataTable() {
             {filteredData.length > 0 ? (
               filteredData.slice(0, 10).map((item) => (
                 <TableRow key={item.id}>
-                  <TableCell className="font-medium">{item.licensePlate}</TableCell>
-                  <TableCell>{item.type}</TableCell>
-                  <TableCell>{item.entryTime}</TableCell>
-                  <TableCell>{item.exitTime}</TableCell>
-                  <TableCell>{item.duration}</TableCell>
+                  <TableCell className="font-medium">
+                    {item.licensePlate}
+                  </TableCell>
+                  <TableCell>{item.carType}</TableCell>
+                  <TableCell>{formatTime(item.checkInTime)}</TableCell>
+                  <TableCell>{formatTime(item.checkOutTime)}</TableCell>
                   <TableCell className="text-right">
-                    {formatCurrency(item.fee)}
+                    {formatCurrency(item.price)}
                   </TableCell>
                 </TableRow>
               ))
@@ -211,39 +283,6 @@ export function DataTable() {
             )}
           </TableBody>
         </Table>
-      </div>
-
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="rounded-lg border p-3">
-          <div className="text-sm font-medium">Phân loại xe</div>
-          <div className="mt-2 space-y-1">
-            {Object.entries(vehicleTypes).map(([type, count]) => (
-              <div key={type} className="flex justify-between text-sm">
-                <span>{type}</span>
-                <span className="font-medium">{count} xe</span>
-              </div>
-            ))}
-          </div>
-        </div>
-        <div className="rounded-lg border p-3">
-          <div className="text-sm font-medium">Tóm tắt báo cáo</div>
-          <div className="mt-2 space-y-1 text-sm">
-            <div className="flex justify-between">
-              <span>Số xe trung bình mỗi ngày:</span>
-              <span className="font-medium">{Math.round(totalVehicles / 7)}</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Doanh thu trung bình mỗi xe:</span>
-              <span className="font-medium">
-                {formatCurrency(totalVehicles > 0 ? Math.round(totalRevenue / totalVehicles) : 0)}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span>Thời gian đỗ trung bình:</span>
-              <span className="font-medium">2 giờ 30 phút</span>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );

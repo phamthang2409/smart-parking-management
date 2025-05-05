@@ -19,7 +19,7 @@ import { dashboardStats, currentVehicles } from "@/lib/data/mockData";
 import { formatCurrency } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { registrationCar } from "../hooks/useRegistrationCar";
-import { format, subDays } from "date-fns";
+import { format, subDays, subHours } from "date-fns";
 
 export default function DashboardPage() {
   const formatMoney = (amount: number) => {
@@ -62,7 +62,7 @@ export default function DashboardPage() {
       carType: item.carType,
       checkin_images: item.checkin_images,
       checkInTime: item.checkInTime,
-      checkOutTime: item.checkOutTime,
+      assignedSlot: item.assignedSlot,
     }));
     setCheckInCars(formattedData);
   };
@@ -106,6 +106,23 @@ export default function DashboardPage() {
       date: displayDate,
       vehiclesIn,
       vehiclesOut,
+    };
+  });
+
+  // Vehicles currently in parking lot
+  // Vehicles currently in parking lot (Updated to take data from checkInCars)
+  const currentVehicles = checkInCars.map((car) => {
+    const foundCar = registeredCars.find(
+      (registeredCar) => registeredCar.licensePlate == car.licensePlate
+    );
+    return {
+      id: car.id,
+      licensePlate: car.licensePlate,
+      entryTime: car.checkInTime,
+      parkingSpot: car.assignedSlot,
+      type: car.carType,
+      status: "Đang đỗ",
+      isMonthly: foundCar ? foundCar.packageName : "Khách / Vãng lai", // Nếu tìm thấy, lấy packageName
     };
   });
 
@@ -190,7 +207,7 @@ export default function DashboardPage() {
             total={totalSlots}
           />
           <div className="col-span-1 lg:col-span-6">
-            <RecentVehicles vehicles={currentVehicles.slice(0, 10)} />
+            <RecentVehicles vehicles={currentVehicles} />
           </div>
         </div>
       </div>
