@@ -12,11 +12,6 @@ export const navItems = [
     icon: "layout-dashboard",
   },
   {
-    title: "Quản lý xe",
-    href: "/vehicles",
-    icon: "car",
-  },
-  {
     title: "Công việc",
     href: "/works",
     icon: "briefcase",
