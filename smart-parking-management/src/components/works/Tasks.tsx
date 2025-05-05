@@ -32,11 +32,9 @@ const ParkingSlot = ({
 export default function TasksTabs({
   assignedSlot,
   checkInCars,
-  allSlots,
 }: {
   assignedSlot: string | null;
   checkInCars: any[];
-  allSlots: string[];
 }) {
   const [slotStatuses, setSlotStatuses] = React.useState<
     Record<string, "available" | "occupied">

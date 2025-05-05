@@ -189,6 +189,7 @@ export default function VehicleInfo({
     if (foundCheckIn) {
       setIsCheckedIn(true);
       setIdCheckIn(foundCheckIn.id);
+      setAssignedSlot(foundCheckIn.assignedSlot);
     } else {
       setIsCheckedIn(false);
     }

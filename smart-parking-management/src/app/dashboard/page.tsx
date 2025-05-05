@@ -29,6 +29,7 @@ export default function DashboardPage() {
   const [checkInCars, setCheckInCars] = useState<any[]>([]);
   const [checkOutCars, setCheckOutCars] = useState<any[]>([]);
   const [registeredCars, setRegisteredCars] = useState<any[]>([]);
+  const [receipts, setReceipts] = useState(0);
 
   const allSlots = Array.from("ABCDEFGHIKL".split("")).flatMap((row) =>
     [1, 2, 3, 4].map((col) => `${row}${col}`)
@@ -129,6 +130,15 @@ export default function DashboardPage() {
     return () => clearInterval(timer);
   }, []);
 
+  useEffect(() => {
+    // Calculate total receipt when checkOutCars changes
+    const receiptActivity = checkOutCars.reduce(
+      (total, car) => total + car.price,
+      0
+    );
+    setReceipts(receiptActivity);
+  }, [checkOutCars]);
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -156,7 +166,7 @@ export default function DashboardPage() {
           />
           <StatCard
             title="Doanh thu hôm nay"
-            value={formatMoney(dashboardStats.dailyRevenue)}
+            value={formatMoney(receipts)}
             icon={DollarSign}
             trend="up"
             trendValue="+15% so với hôm qua"
