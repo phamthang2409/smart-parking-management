@@ -6,9 +6,11 @@ namespace smart_parking_system.Models
     {
         [Key]
         public int ID { get; set; }
+
         [Required]
         [DataType("nvarchar(50)")]
         public string? FullName { get; set; }
+
         [Required]
         [DataType("nvarchar(50)")]
         public string? LicensePlate { get; set; }
@@ -23,5 +25,8 @@ namespace smart_parking_system.Models
 
         [DataType(DataType.DateTime)]
         public DateTime CheckInTime { get; set; }
+
+        [DataType("nvarchar(20)")]
+        public string? AssignedSlot { get; set; }
     }
 }

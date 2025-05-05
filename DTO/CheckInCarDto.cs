@@ -8,5 +8,8 @@
         public string? CarType { get; set; }
 
         public string? Checkin_images { get; set; }
+
+        //Trạng thái đổ xe
+        public string? AssignedSlot { get; set; }
     }
 }

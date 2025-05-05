@@ -46,6 +46,7 @@ namespace smart_parking_system.Areas.CheckInCarControllers.Controllers
                     CarType = dto.CarType,
                     CheckInTime = DateTime.Now,
                     Checkin_images = dto.Checkin_images,
+                    AssignedSlot = dto.AssignedSlot,
                 };
 
                 // Thêm mới đối tượng vào cơ sở dữ liệu
