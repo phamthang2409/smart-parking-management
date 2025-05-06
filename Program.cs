@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
 using smart_parking_system.Models;
 using smart_parking_system.Services;
 
@@ -60,6 +61,13 @@ namespace smart_parking_system
             app.MapControllerRoute(
                 name: "default",
                 pattern: "{controller=Home}/{action=Index}/{id?}");
+
+            app.UseStaticFiles(new StaticFileOptions
+            {
+                FileProvider = new PhysicalFileProvider(
+                Path.Combine(Directory.GetCurrentDirectory(), "UploadedFiles")),
+                RequestPath = "/UploadedFiles"
+            });
 
             app.Run();
         }

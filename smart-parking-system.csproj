@@ -27,7 +27,6 @@
 
   <ItemGroup>
     <Folder Include="Areas\RegistrationCarMonthlyControllers\" />
-    <Folder Include="UploadedFiles\" />
   </ItemGroup>
 
 </Project>
