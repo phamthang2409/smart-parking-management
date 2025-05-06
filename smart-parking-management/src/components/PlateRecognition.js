@@ -38,12 +38,14 @@ const PlateRecognition = ({ image, onResult }) => {
       });
 
       const data = await response.json();
-      setText(data.plate || "Không nhận diện được");
+      const correctedPlate = correctPlateFormat(data.plate || "");
+      setText(correctedPlate || "Không nhận diện được");
+
       setRawText(data.all?.map((line) => line.text).join(", ") || "");
       setConfidence(data.confidence); // Lưu độ tin cậy vào state
 
-      if (data.confidence > 85) {
-        // Nếu độ tin cậy > 90%, dừng nhận diện
+      if (data.confidence > 60) {
+        // Nếu độ tin cậy > 60%, dừng nhận diện
         setIsRecognized(true);
       }
 
@@ -56,6 +58,23 @@ const PlateRecognition = ({ image, onResult }) => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const correctPlateFormat = (plate) => {
+    if (!plate) return plate;
+
+    // Chuyển về in hoa và bỏ khoảng trắng/thừa
+    let cleaned = plate
+      .trim()
+      .toUpperCase()
+      .replace(/[^A-Z0-9]/g, "");
+
+    // Ví dụ: nếu dạng NN-HZ7060 => sửa thành NN-H77060
+    if (/^[0-9]{2}[A-Z][A-Z][0-9]{4}$/.test(cleaned)) {
+      cleaned = cleaned.replace(/^([0-9]{2}[A-Z])Z([0-9]{4})$/, "$17$2");
+    }
+
+    return cleaned;
   };
 
   const preprocessImage = async () => {

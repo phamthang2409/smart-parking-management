@@ -17,8 +17,6 @@ import { checkOutCar } from "@/app/hooks/useCheckOutCar";
 
 interface RevenueChartProps {
   title: string;
-  checkInCars: any[]; // Dữ liệu xe đã check-in
-  checkOutCars: any[]; // Dữ liệu xe đã check-out
 }
 
 // Dữ liệu biểu đồ doanh thu

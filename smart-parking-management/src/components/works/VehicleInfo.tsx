@@ -82,7 +82,7 @@ export default function VehicleInfo({
     const numberPart = cleanedRaw.slice(4);
 
     if (numberPart.length >= 5) {
-      return `${provinceCode} ${typeChar} ${numberPart.slice(
+      return `${provinceCode}-${typeChar} ${numberPart.slice(
         0,
         3
       )}.${numberPart.slice(3)}`;

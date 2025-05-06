@@ -40,7 +40,7 @@ export function DataTable() {
   const [timeRange, setTimeRange] = useState("week");
   const [exportFormat, setExportFormat] = useState("excel");
   const [isExporting, setIsExporting] = useState(false);
-  const [combinedData, setCombinedData] = useState<any[]>([]);
+  const [checkOutCars, setCheckOutCars] = useState<any[]>([]);
 
   const fetchDataCheckInCar = async () => {
     const data = await checkInCar();
@@ -61,30 +61,17 @@ export function DataTable() {
       id: item.id,
       licensePlate: item.licensePlate,
       price: item.price,
+      carType: item.carType,
+      checkInTime: item.checkInTime,
       checkOutTime: item.checkOutTime,
     }));
+    setCheckOutCars(formattedData);
     return formattedData;
   };
 
   useEffect(() => {
     const getData = async () => {
-      const checkInCars = await fetchDataCheckInCar();
-      const checkOutCars = await fetchDataCheckOutCar();
-
-      // Nối dữ liệu checkIn và checkOut vào một mảng thống nhất
-      const combinedData = checkInCars.map((checkInItem: any) => {
-        const checkOutItem = checkOutCars.find(
-          (item: any) => item.licensePlate === checkInItem.licensePlate
-        );
-
-        return {
-          ...checkInItem,
-          checkOutTime: checkOutItem ? checkOutItem.checkOutTime : null,
-          price: checkOutItem ? checkOutItem.price : 0,
-        };
-      });
-
-      setCombinedData(combinedData);
+      fetchDataCheckOutCar();
     };
 
     getData();
@@ -126,7 +113,7 @@ export function DataTable() {
 
   // Filter data based on search term and time range
   const filteredData = filterDataByTimeRange(
-    combinedData.filter(
+    checkOutCars.filter(
       (item) =>
         item.licensePlate.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.carType.toLowerCase().includes(searchTerm.toLowerCase())
