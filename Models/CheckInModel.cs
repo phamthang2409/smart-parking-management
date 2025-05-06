@@ -10,7 +10,6 @@ namespace smart_parking_system.Models
         [Required]
         [DataType("nvarchar(50)")]
         public string? FullName { get; set; }
-
         [Required]
         [DataType("nvarchar(50)")]
         public string? LicensePlate { get; set; }

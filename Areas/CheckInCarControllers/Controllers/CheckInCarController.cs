@@ -83,6 +83,7 @@ namespace smart_parking_system.Areas.CheckInCarControllers.Controllers
                     LicensePlate = checkInCar.LicensePlate,
                     Price = checkInCar.Price,
                     CarType = checkInCar.CarType,
+                    CheckInTime = checkInCar.CheckInTime,
                     CheckOutTime = DateTime.Now,
                 });
                 await _context.SaveChangesAsync();

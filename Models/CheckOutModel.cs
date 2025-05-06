@@ -19,6 +19,9 @@ namespace smart_parking_system.Models
         public string? CarType { get; set; }
 
         [DataType(DataType.DateTime)]
+        public DateTime CheckInTime { get; set; }
+
+        [DataType(DataType.DateTime)]
         public DateTime CheckOutTime { get; set; }
     }
 }
