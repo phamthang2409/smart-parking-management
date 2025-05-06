@@ -35,6 +35,7 @@ export default function VehicleInfo({
 }: any) {
   const [vehicleType, setVehicleType] = useState("Xe máy"); //Thêm state này
   const [hasPlateData, setHasPlateData] = useState(false);
+  const [checkInImageUrl, setCheckInImageUrl] = useState<string | null>(null);
 
   const getPrice = (type: string): string => {
     if (type === "Xe máy") return "5,000₫";
@@ -94,18 +95,6 @@ export default function VehicleInfo({
     setPlateText(text);
     setRawPlateText(raw);
     setHasPlateData(true);
-
-    const availableSlots = Object.entries(slotStatuses)
-      .filter(([_, status]) => status === "available")
-      .map(([label]) => label);
-
-    if (availableSlots.length > 0) {
-      const randomSlot =
-        availableSlots[Math.floor(Math.random() * availableSlots.length)];
-      setAssignedSlot(randomSlot);
-    } else {
-      toast.error("Không còn chỗ trống!");
-    }
   };
 
   async function handleCheckIn() {
@@ -166,6 +155,20 @@ export default function VehicleInfo({
   }
 
   useEffect(() => {
+    const availableSlots = Object.entries(slotStatuses)
+      .filter(([_, status]) => status === "available")
+      .map(([label]) => label);
+
+    if (availableSlots.length > 0) {
+      const randomSlot =
+        availableSlots[Math.floor(Math.random() * availableSlots.length)];
+      setAssignedSlot(randomSlot);
+    } else {
+      toast.error("Không còn chỗ trống!");
+    }
+  }, []);
+
+  useEffect(() => {
     if (!hasPlateData || registeredCars.length === 0) return;
 
     const normalizedPlate = formatPlate(plateText).replace(/\s/g, "");
@@ -190,8 +193,18 @@ export default function VehicleInfo({
       setIsCheckedIn(true);
       setIdCheckIn(foundCheckIn.id);
       setAssignedSlot(foundCheckIn.assignedSlot);
+      // Convert local path to URL (tạm fix)
+      const localPath = foundCheckIn.checkin_images;
+      if (localPath) {
+        const fileName = localPath.split("\\").pop(); // Lấy tên file
+        const publicUrl = `https://localhost:7107/UploadedFiles/${fileName}`;
+        setCheckInImageUrl(publicUrl);
+      } else {
+        setCheckInImageUrl(null);
+      }
     } else {
       setIsCheckedIn(false);
+      setCheckInImageUrl(null);
     }
   }, [hasPlateData, registeredCars, plateText, checkInCars]);
 
@@ -289,6 +302,9 @@ export default function VehicleInfo({
                 ) : (
                   <>
                     <p>
+                      <strong>Chủ xe: </strong> Khách/Vãng lai
+                    </p>
+                    <p>
                       <strong>Loại xe:</strong> {vehicleType}
                     </p>
                     <p>
@@ -300,6 +316,17 @@ export default function VehicleInfo({
                   <p>
                     <strong>Vị trí đỗ xe:</strong> {assignedSlot}
                   </p>
+                )}
+
+                {checkInImageUrl && (
+                  <div className="mt-4">
+                    <p className="font-semibold mb-2">Ảnh lúc Check In:</p>
+                    <img
+                      src={checkInImageUrl}
+                      alt="Ảnh check in"
+                      className="w-full rounded shadow"
+                    />
+                  </div>
                 )}
               </CardContent>
             </Card>
