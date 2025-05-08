@@ -20,11 +20,9 @@ const ParkingSlot = ({
   let borderStyle = isAssigned ? "border-4 border-yellow-300" : "";
 
   return (
-    <div className={`${baseStyle} ${bgColor} ${borderStyle}`}>
+    <div className={`${baseStyle} ${bgColor}`}>
       <div>{label}</div>
-      {isAssigned && (
-        <div className="text-xs text-yellow-200 mt-1">(Đã gán)</div>
-      )}
+      {/* {isAssigned && <div className="text-xs text-yellow-200 mt-1"></div>} */}
     </div>
   );
 };
