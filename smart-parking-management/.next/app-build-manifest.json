@@ -21,15 +21,20 @@
       "static/chunks/main-app.js",
       "static/chunks/app/works/page.js"
     ],
+    "/registrations/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/registrations/page.js"
+    ],
     "/reports/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/reports/page.js"
     ],
-    "/registrations/page": [
+    "/settings/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/registrations/page.js"
+      "static/chunks/app/settings/page.js"
     ]
   }
 }

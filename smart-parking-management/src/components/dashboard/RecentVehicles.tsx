@@ -10,6 +10,14 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import {
+  format,
+  startOfDay,
+  startOfWeek,
+  startOfMonth,
+  startOfYear,
+  isAfter,
+} from "date-fns";
 
 interface Vehicle {
   id: string;
@@ -24,6 +32,12 @@ interface Vehicle {
 interface RecentVehiclesProps {
   vehicles: Vehicle[];
 }
+
+const formatTime = (time: string | null) => {
+  if (!time) return "-";
+  const formattedTime = format(new Date(time), "dd/MM/yyyy HH:mm");
+  return formattedTime;
+};
 
 export function RecentVehicles({ vehicles }: RecentVehiclesProps) {
   return (
@@ -58,7 +72,7 @@ export function RecentVehicles({ vehicles }: RecentVehiclesProps) {
                     )}
                   </TableCell>
                   <TableCell>{vehicle.type}</TableCell>
-                  <TableCell>{vehicle.entryTime}</TableCell>
+                  <TableCell>{formatTime(vehicle.entryTime)}</TableCell>
                   <TableCell>{vehicle.parkingSpot}</TableCell>
                   <TableCell>
                     <Badge variant="secondary">{vehicle.status}</Badge>

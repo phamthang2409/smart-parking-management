@@ -72,7 +72,7 @@ export default function RegistrationsPage() {
               </CardHeader>
               <CardContent>
                 {/*Truyền fetchData để gọi lại sau khi POST */}
-                <RegistrationForm />/
+                <RegistrationForm />
               </CardContent>
             </Card>
           </TabsContent>
@@ -86,7 +86,7 @@ export default function RegistrationsPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {/* ✅ Truyền data + fetchData để xoá hoặc cập nhật */}
+                {/* Truyền data + fetchData để xoá hoặc cập nhật */}
                 <RegistrationsList
                   data={registeredCars}
                   fetchData={fetchData}
