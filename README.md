@@ -1,0 +1,1 @@
+Smart Parking System là một giải pháp công nghệ tiên tiến được thiết kế nhằm tối ưu hóa quy trình tìm và quản lý bãi đỗ xe trong khu đô thị hiện đại. Hệ thống sử dụng các cảm biến, camera nhận diện biển số, và phần mềm điều khiển trung tâm để cung cấp thông tin thời gian thực về vị trí đỗ xe còn trống.
