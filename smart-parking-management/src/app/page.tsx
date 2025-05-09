@@ -140,7 +140,7 @@ export default function LoginPage() {
             </form>
           </Form>
         </CardContent>
-        <CardFooter className="flex flex-col space-y-4 text-center text-sm text-muted-foreground">
+        {/* <CardFooter className="flex flex-col space-y-4 text-center text-sm text-muted-foreground">
           <div>
             <span>Tài khoản demo: </span>
             <code className="rounded bg-muted px-1 py-0.5 font-mono text-sm">
@@ -148,7 +148,7 @@ export default function LoginPage() {
             </code>
           </div>
           <div className="text-xs">© 2024 Smart Parking Management System</div>
-        </CardFooter>
+        </CardFooter> */}
       </Card>
     </div>
   );
