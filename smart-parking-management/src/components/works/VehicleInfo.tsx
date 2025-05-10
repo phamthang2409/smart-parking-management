@@ -10,6 +10,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { sendToBackend } from "@/app/api/uploadPlate";
 
@@ -33,9 +41,10 @@ export default function VehicleInfo({
   idCheckIn,
   setIdCheckIn,
 }: any) {
-  const [vehicleType, setVehicleType] = useState("Xe máy"); //Thêm state này
+  const [vehicleType, setVehicleType] = useState("Xe máy");
   const [hasPlateData, setHasPlateData] = useState(false);
   const [checkInImageUrl, setCheckInImageUrl] = useState<string | null>(null);
+  const [openDialog, setOpenDialog] = useState(false);
 
   const getPrice = (type: string): string => {
     if (type === "Xe máy") return "5,000₫";
@@ -92,9 +101,21 @@ export default function VehicleInfo({
   };
 
   const handlePlateData = async (text: string, raw: string) => {
-    setPlateText(text);
-    setRawPlateText(raw);
-    setHasPlateData(true);
+    if (text === "Không nhận diện được" || text.length < 8) {
+      setOpenDialog(true);
+      setPlateText("");
+      setRawPlateText("");
+      setHasPlateData(false);
+      setVehicleInfo(null);
+      setIsCheckedIn(false);
+      setCheckInImageUrl(null);
+      setIdCheckIn(0);
+      setAssignedSlot("");
+    } else {
+      setPlateText(text);
+      setRawPlateText(raw);
+      setHasPlateData(true);
+    }
   };
 
   async function handleCheckIn() {
@@ -193,10 +214,9 @@ export default function VehicleInfo({
       setIsCheckedIn(true);
       setIdCheckIn(foundCheckIn.id);
       setAssignedSlot(foundCheckIn.assignedSlot);
-      // Convert local path to URL (tạm fix)
       const localPath = foundCheckIn.checkin_images;
       if (localPath) {
-        const fileName = localPath.split("\\").pop(); // Lấy tên file
+        const fileName = localPath.split("\\").pop();
         const publicUrl = `https://localhost:7107/UploadedFiles/${fileName}`;
         setCheckInImageUrl(publicUrl);
       } else {
@@ -229,7 +249,6 @@ export default function VehicleInfo({
               <CardContent>
                 <p className="text-2xl font-bold">{formatPlate(plateText)}</p>
 
-                {/* Lựa chọn loại xe */}
                 <div className="flex gap-2 mt-4">
                   <button
                     className={`px-3 py-1 rounded border ${
@@ -253,7 +272,6 @@ export default function VehicleInfo({
                   </button>
                 </div>
 
-                {/* Nút Check In/Out */}
                 <div className="mt-4 space-x-4">
                   {!isCheckedIn ? (
                     <button
@@ -334,7 +352,6 @@ export default function VehicleInfo({
         )}
       </div>
 
-      {/* Cột camera */}
       <Card className="bg-blue-50 w-full md:w-[500px]">
         <CardHeader>
           <CardTitle>Quét biển số xe</CardTitle>
@@ -347,7 +364,6 @@ export default function VehicleInfo({
         </CardContent>
       </Card>
 
-      {/* Cột kết quả nhận diện */}
       <Card className="bg-blue-50 w-full md:w-[500px]">
         <CardHeader>
           <CardTitle>Nhận diện biển số</CardTitle>
@@ -358,6 +374,18 @@ export default function VehicleInfo({
           )}
         </CardContent>
       </Card>
+
+      <Dialog open={openDialog} onOpenChange={setOpenDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Thông báo</DialogTitle>
+          </DialogHeader>
+          <p>Vui lòng chụp lại biển số xe.</p>
+          <DialogFooter>
+            <Button onClick={() => window.location.reload()}>OK</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
