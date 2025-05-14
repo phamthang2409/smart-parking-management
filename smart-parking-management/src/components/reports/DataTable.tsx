@@ -42,19 +42,6 @@ export function DataTable() {
   const [isExporting, setIsExporting] = useState(false);
   const [checkOutCars, setCheckOutCars] = useState<any[]>([]);
 
-  const fetchDataCheckInCar = async () => {
-    const data = await checkInCar();
-    const formattedData = data.map((item: any) => ({
-      id: item.id,
-      fullName: item.fullName,
-      licensePlate: item.licensePlate,
-      carType: item.carType,
-      checkInTime: item.checkInTime,
-      checkOutTime: item.checkOutTime,
-    }));
-    return formattedData;
-  };
-
   const fetchDataCheckOutCar = async () => {
     const data = await checkOutCar();
     const formattedData = data.map((item: any) => ({
@@ -73,7 +60,6 @@ export function DataTable() {
     const getData = async () => {
       fetchDataCheckOutCar();
     };
-
     getData();
   }, []);
 

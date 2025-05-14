@@ -148,12 +148,17 @@ export default function DashboardPage() {
   }, []);
 
   useEffect(() => {
-    // Calculate total receipt when checkOutCars changes
-    const receiptActivity = checkOutCars.reduce(
-      (total, car) => total + car.price,
-      0
-    );
-    setReceipts(receiptActivity);
+    const today = format(new Date(), "yyyy-MM-dd");
+    const todayReceipts = checkOutCars
+      .filter((car) => {
+        const checkOutDate = car.checkOutTime
+          ? format(new Date(car.checkOutTime), "yyyy-MM-dd")
+          : null;
+        return checkOutDate === today;
+      })
+      .reduce((total, car) => total + car.price, 0);
+
+    setReceipts(todayReceipts);
   }, [checkOutCars]);
 
   return (
